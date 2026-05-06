@@ -1,0 +1,194 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #0e0e0b;
+    --bg-secondary: #161612;
+    --bg-card: #1a1a15;
+    --bg-card-hover: #1f1f19;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-focus: rgba(251, 191, 36, 0.5);
+    --text-primary: #f0ede4;
+    --text-secondary: #9b9880;
+    --text-muted: #5e5c4a;
+    --accent: #fbbf24;
+    --accent-dim: rgba(251, 191, 36, 0.12);
+    --accent-glow: rgba(251, 191, 36, 0.25);
+    --success: #10b981;
+    --danger: #f43f5e;
+    --warning: #f59e0b;
+  }
+
+  html {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  ::selection {
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--text-muted);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+  }
+}
+
+@layer components {
+  /* Card base */
+  .card {
+    @apply rounded-xl border bg-[var(--bg-card)] shadow-card transition-all duration-200;
+    border-color: var(--border);
+  }
+
+  .card-hover {
+    @apply card hover:bg-[var(--bg-card-hover)] hover:shadow-card-hover hover:border-[rgba(251,191,36,0.15)];
+  }
+
+  /* Inputs */
+  .input {
+    @apply w-full rounded-lg px-3.5 py-2.5 text-sm font-body
+      bg-[var(--bg-secondary)] text-[var(--text-primary)]
+      border border-[var(--border)]
+      placeholder:text-[var(--text-muted)]
+      focus:outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400/50
+      transition-all duration-150;
+  }
+
+  .input:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* Labels */
+  .label {
+    @apply block text-xs font-medium tracking-wider uppercase mb-1.5
+      text-[var(--text-secondary)];
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2
+      px-4 py-2.5 rounded-lg text-sm font-medium font-body
+      bg-amber-400 text-obsidian-950
+      hover:bg-amber-300 active:bg-amber-500
+      focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]
+      transition-all duration-150 cursor-pointer
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2
+      px-4 py-2.5 rounded-lg text-sm font-medium font-body
+      bg-[var(--bg-card)] text-[var(--text-primary)]
+      border border-[var(--border)]
+      hover:bg-[var(--bg-card-hover)] hover:border-[rgba(255,255,255,0.12)]
+      focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]
+      transition-all duration-150 cursor-pointer
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2
+      px-4 py-2.5 rounded-lg text-sm font-medium font-body
+      bg-rose-500/10 text-rose-400
+      border border-rose-500/20
+      hover:bg-rose-500/20 hover:border-rose-500/40
+      focus:outline-none focus:ring-2 focus:ring-rose-500/30
+      transition-all duration-150 cursor-pointer
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2
+      px-3 py-2 rounded-lg text-sm font-medium font-body
+      text-[var(--text-secondary)]
+      hover:bg-white/5 hover:text-[var(--text-primary)]
+      focus:outline-none
+      transition-all duration-150 cursor-pointer;
+  }
+
+  /* Stat cards */
+  .stat-card {
+    @apply card p-5 flex flex-col gap-2;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply rounded-lg bg-[var(--bg-card)] animate-pulse;
+    background: linear-gradient(
+      90deg,
+      var(--bg-card) 25%,
+      var(--bg-card-hover) 50%,
+      var(--bg-card) 75%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Table */
+  .table-row {
+    @apply border-b border-[var(--border)] hover:bg-white/[0.02] transition-colors duration-100;
+  }
+
+  .table-cell {
+    @apply px-4 py-3.5 text-sm;
+  }
+
+  /* Divider */
+  .divider {
+    @apply border-t border-[var(--border)] my-4;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent;
+  }
+
+  .glow-amber {
+    text-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+  }
+
+  .surface-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+}
+
+/* Recharts custom styles */
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}
+
+.custom-tooltip {
+  @apply card p-3 text-sm !border-[var(--border)];
+}
+
+/* Focus visible only */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
