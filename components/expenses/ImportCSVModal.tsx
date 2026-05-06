@@ -94,8 +94,8 @@ export default function ImportCSVModal({ userId, onClose, onImported }: Props) {
 
         parsed.push({
           amount: cleanAmount,
-          category: VALID_CATEGORIES.has(category) ? category : 'Other',
-          payment_method: (VALID_PAYMENTS as Set<string>).has(payment) ? payment as PaymentMethod : 'Other',
+          category: ((VALID_CATEGORIES as Set<string>).has(category) ? category : 'Other') as any,
+          payment_method: ((VALID_PAYMENTS as Set<string>).has(payment) ? payment : 'Other') as any,
           date,
           notes: notes.slice(0, 500),
           valid: !error,
