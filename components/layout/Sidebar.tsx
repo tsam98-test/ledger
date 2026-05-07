@@ -11,11 +11,11 @@ import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
-  { href: '/dashboard-home', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/expenses',    label: 'Expenses',    icon: Receipt         },
-  { href: '/income',      label: 'Income',      icon: Wallet          },
-  { href: '/investments', label: 'Investments', icon: BarChart2       },
-  { href: '/budgets',     label: 'Budgets',     icon: Target          },
+  { href: '/dashboard-home', label: 'Dashboard',   icon: LayoutDashboard },
+  { href: '/expenses',       label: 'Expenses',    icon: Receipt         },
+  { href: '/income',         label: 'Income',      icon: Wallet          },
+  { href: '/investments',    label: 'Investments', icon: BarChart2       },
+  { href: '/budgets',        label: 'Budgets',     icon: Target          },
 ]
 
 export default function Sidebar({ userEmail }: { userEmail: string }) {
@@ -36,10 +36,11 @@ export default function Sidebar({ userEmail }: { userEmail: string }) {
     >
       <div className="px-6 py-7 border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center flex-shrink-0">
-            <TrendingUp className="w-5 h-5 text-amber-400" />
+          <Image src="/Icon.png" alt="Spendora" width={36} height={36} className="rounded-xl flex-shrink-0" />
+          <div>
+            <p className="font-display text-xl text-[var(--text-primary)] leading-none">Spendora</p>
+            <p className="text-[10px] text-[var(--text-muted)] mt-0.5 uppercase tracking-widest">Track. Budget. Grow.</p>
           </div>
-          <Image src="/icon.png" alt="Spendora" width={36} height={36} className="rounded-xl flex-shrink-0" />
         </div>
       </div>
 
