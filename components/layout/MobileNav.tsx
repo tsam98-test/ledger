@@ -13,10 +13,10 @@ import { useState } from 'react'
 
 const NAV_ITEMS = [
   { href: '/dashboard-home', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/expenses',    label: 'Expenses',    icon: Receipt         },
-  { href: '/income',      label: 'Income',      icon: Wallet          },
-  { href: '/investments', label: 'Investments', icon: BarChart2       },
-  { href: '/budgets',     label: 'Budgets',     icon: Target          },
+  { href: '/expenses',       label: 'Expenses',  icon: Receipt         },
+  { href: '/income',         label: 'Income',    icon: Wallet          },
+  { href: '/investments',    label: 'Investments', icon: BarChart2     },
+  { href: '/budgets',        label: 'Budgets',   icon: Target          },
 ]
 
 export default function MobileNav({ userEmail }: { userEmail: string }) {
@@ -38,8 +38,8 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
         className="lg:hidden sticky top-0 z-20 flex items-center justify-between px-4 h-14 border-b"
         style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
       >
-        <Image src="/Icon.png" alt="Spendora" width={28} height={28} className="rounded-lg" />
-          </div>
+        <div className="flex items-center gap-2.5">
+          <Image src="/Icon.png" alt="Spendora" width={28} height={28} className="rounded-lg" />
           <span className="font-display text-lg text-[var(--text-primary)]">Spendora</span>
         </div>
         <button onClick={() => setMenuOpen(!menuOpen)} className="btn-ghost p-2" aria-label="Menu">
@@ -92,7 +92,7 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
         </div>
       )}
 
-      {/* Bottom tab bar (mobile) - show first 5 */}
+      {/* Bottom tab bar */}
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-20 flex border-t"
         style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
