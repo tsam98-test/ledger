@@ -299,8 +299,8 @@ export default function InvestmentsClient({
                 </tr>
               ) : (
                 filtered.map((inv) => {
-                  const ret    = Number(inv.current_value) - Number(inv.amount_invested)
-                  const pct    = Number(inv.amount_invested) > 0 ? (ret / Number(inv.amount_invested)) * 100 : 0
+                  const ret    = inv.current_value != null ? Number(inv.current_value) - Number(inv.amount_invested) : 0
+                  const pct    = inv.current_value != null && Number(inv.amount_invested) > 0 ? (ret / Number(inv.amount_invested)) * 100 : 0
                   const isPos  = ret >= 0
                   return (
                     <tr key={inv.id} className="table-row">
@@ -317,16 +317,22 @@ export default function InvestmentsClient({
                         {formatCurrency(inv.amount_invested)}
                       </td>
                       <td className="table-cell text-sm font-mono font-medium text-amber-400">
-                        {formatCurrency(inv.current_value)}
+                        {inv.current_value != null ? formatCurrency(inv.current_value) : <span className="text-[var(--text-muted)] text-xs">Not set</span>}
                       </td>
                       <td className="table-cell">
-                        <div className={`flex items-center gap-1 text-sm font-mono font-semibold ${isPos ? 'text-jade-400' : 'text-rose-400'}`}>
-                          {isPos ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
-                          <span>{isPos ? '+' : ''}{pct.toFixed(2)}%</span>
-                        </div>
-                        <p className={`text-xs font-mono ${isPos ? 'text-jade-400' : 'text-rose-400'} opacity-70`}>
-                          {isPos ? '+' : ''}{formatCurrency(ret)}
-                        </p>
+                        {inv.current_value != null ? (
+                          <>
+                            <div className={`flex items-center gap-1 text-sm font-mono font-semibold ${isPos ? 'text-jade-400' : 'text-rose-400'}`}>
+                              {isPos ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+                              <span>{isPos ? '+' : ''}{pct.toFixed(2)}%</span>
+                            </div>
+                            <p className={`text-xs font-mono ${isPos ? 'text-jade-400' : 'text-rose-400'} opacity-70`}>
+                              {isPos ? '+' : ''}{formatCurrency(ret)}
+                            </p>
+                          </>
+                        ) : (
+                          <span className="text-[var(--text-muted)] text-xs">—</span>
+                        )}
                       </td>
                       <td className="table-cell hidden md:table-cell">
                         <div className="flex items-center gap-1.5">
