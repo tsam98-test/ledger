@@ -5,11 +5,12 @@ import { format, parseISO, getDaysInMonth, startOfMonth, getDay } from 'date-fns
 import {
   TrendingUp, TrendingDown, Receipt, Target, Wallet, BarChart2,
   ArrowUpRight, ArrowDownRight, X, Plus, ChevronLeft, ChevronRight,
-  LayoutDashboard, CalendarDays, PieChart as PieIcon, BarChart,
+  LayoutDashboard, PieChart as PieIcon, BarChart,
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart as ReBarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell,
+  LineChart, Line,
 } from 'recharts'
 import type { Expense, Income, Investment, Budget } from '@/types'
 import { INVESTMENT_CATEGORY_COLORS, INCOME_CATEGORY_COLORS } from '@/types'
@@ -22,7 +23,7 @@ import AddExpenseModal from '@/components/expenses/AddExpenseModal'
 import AddIncomeModal from '@/components/income/AddIncomeModal'
 
 type ViewMode  = 'all' | 'income' | 'expenses' | 'investments' | 'budget'
-type ChartType = 'daily' | 'heatmap' | 'donut'
+type ChartType = 'daily' | 'line' | 'donut'
 
 interface Props {
   expenses: Expense[]
@@ -37,9 +38,9 @@ function getMonthKey(d: string) { return d.slice(0, 7) }
 
 function getCategoryEmoji(cat: string): string {
   const m: Record<string, string> = {
-    'Food & Dining':'🍽️', Transportation:'🚗', Shopping:'🛍️', Entertainment:'🎬',
-    Healthcare:'🏥', Utilities:'💡', Housing:'🏠', Education:'📚',
-    'Personal Care':'💆', Travel:'✈️', Subscriptions:'🔄', Other:'📌',
+    'Food & Dining': '🍽️', Transportation: '🚗', Shopping: '🛍️', Entertainment: '🎬',
+    Healthcare: '🏥', Utilities: '💡', Housing: '🏠', Education: '📚',
+    'Personal Care': '💆', Travel: '✈️', Subscriptions: '🔄', Other: '📌',
   }
   return m[cat] ?? '💰'
 }
@@ -101,7 +102,7 @@ export default function DashboardClient({
     const base = new Date(selectedMonth + '-01')
     const days = getDaysInMonth(base)
     return Array.from({ length: days }, (_, i) => {
-      const dayStr = String(i + 1).padStart(2, '0')
+      const dayStr  = String(i + 1).padStart(2, '0')
       const dateStr = `${selectedMonth}-${dayStr}`
       const exp = monthExpenses.filter(e => e.date.startsWith(dateStr)).reduce((s, e) => s + Number(e.amount), 0)
       const inc = monthIncome.filter(i => i.date.startsWith(dateStr)).reduce((s, i) => s + Number(i.amount), 0)
@@ -109,16 +110,7 @@ export default function DashboardClient({
     })
   }, [monthExpenses, monthIncome, selectedMonth])
 
-  // Heatmap data — spending per day
-  const heatmapData = useMemo(() => {
-    const base = new Date(selectedMonth + '-01')
-    const days = getDaysInMonth(base)
-    const startDay = getDay(startOfMonth(base)) // 0=Sun
-    const maxSpend = Math.max(...dailyData.map(d => d.expenses), 1)
-    return { days, startDay, maxSpend, dailyData }
-  }, [dailyData, selectedMonth])
-
-  // Donut data — expenses by category
+  // Expenses by category (donut)
   const expByCategory = useMemo(() => {
     const map: Record<string, number> = {}
     monthExpenses.forEach(e => { map[e.category] = (map[e.category] ?? 0) + Number(e.amount) })
@@ -173,9 +165,9 @@ export default function DashboardClient({
   ]
 
   const CHART_OPTIONS: { id: ChartType; label: string; icon: React.ReactNode }[] = [
-    { id: 'daily',   label: 'Daily',   icon: <BarChart size={13} />       },
-    { id: 'heatmap', label: 'Heatmap', icon: <CalendarDays size={13} />   },
-    { id: 'donut',   label: 'Donut',   icon: <PieIcon size={13} />        },
+    { id: 'daily', label: 'Daily', icon: <BarChart size={13} />   },
+    { id: 'line',  label: 'Line',  icon: <TrendingUp size={13} /> },
+    { id: 'donut', label: 'Donut', icon: <PieIcon size={13} />    },
   ]
 
   return (
@@ -429,89 +421,83 @@ export default function DashboardClient({
                   <YAxis
                     tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
                     axisLine={false} tickLine={false}
-                    tickFormatter={v => `$${v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}`}
+                    tickFormatter={v => `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`}
                   />
                   <Tooltip content={<DailyTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
                   {(viewMode === 'all' || viewMode === 'income') && (
-                    <Bar dataKey="income" name="Income" fill="#10b981" opacity={0.85} radius={[3,3,0,0]} />
+                    <Bar dataKey="income" name="Income" fill="#10b981" opacity={0.85} radius={[3, 3, 0, 0]} />
                   )}
                   {(viewMode === 'all' || viewMode === 'expenses') && (
-                    <Bar dataKey="expenses" name="Expenses" fill="#f43f5e" opacity={0.85} radius={[3,3,0,0]} />
+                    <Bar dataKey="expenses" name="Expenses" fill="#f43f5e" opacity={0.85} radius={[3, 3, 0, 0]} />
                   )}
                 </ReBarChart>
               </ResponsiveContainer>
               <div className="flex gap-4 mt-3 text-xs text-[var(--text-muted)]">
                 {(viewMode === 'all' || viewMode === 'income') && (
                   <span className="flex items-center gap-1.5">
-                    <span className="w-3 h-1.5 rounded-sm inline-block" style={{background:'#10b981'}} />Income
+                    <span className="w-3 h-1.5 rounded-sm inline-block" style={{ background: '#10b981' }} />Income
                   </span>
                 )}
                 {(viewMode === 'all' || viewMode === 'expenses') && (
                   <span className="flex items-center gap-1.5">
-                    <span className="w-3 h-1.5 rounded-sm inline-block" style={{background:'#f43f5e'}} />Expenses
+                    <span className="w-3 h-1.5 rounded-sm inline-block" style={{ background: '#f43f5e' }} />Expenses
                   </span>
                 )}
               </div>
             </>
           )}
 
-          {/* ── SPENDING HEATMAP ── */}
-          {chartType === 'heatmap' && (
-            <div>
-              <div className="grid grid-cols-7 gap-1 mb-1">
-                {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-                  <div key={d} className="text-center text-[10px] text-[var(--text-muted)]">{d}</div>
-                ))}
+          {/* ── LINE CHART ── */}
+          {chartType === 'line' && (
+            <>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={dailyData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+                  <defs>
+                    <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
+                    axisLine={false} tickLine={false}
+                    interval={4}
+                  />
+                  <YAxis
+                    tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                    axisLine={false} tickLine={false}
+                    tickFormatter={v => `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`}
+                  />
+                  <Tooltip content={<DailyTooltip />} />
+                  {(viewMode === 'all' || viewMode === 'income') && (
+                    <Line type="monotone" dataKey="income" name="Income" stroke="#10b981" strokeWidth={2}
+                      dot={{ fill: '#10b981', r: 2, strokeWidth: 0 }} activeDot={{ r: 4 }} />
+                  )}
+                  {(viewMode === 'all' || viewMode === 'expenses') && (
+                    <Line type="monotone" dataKey="expenses" name="Expenses" stroke="#f43f5e" strokeWidth={2}
+                      dot={{ fill: '#f43f5e', r: 2, strokeWidth: 0 }} activeDot={{ r: 4 }} />
+                  )}
+                </LineChart>
+              </ResponsiveContainer>
+              <div className="flex gap-4 mt-3 text-xs text-[var(--text-muted)]">
+                {(viewMode === 'all' || viewMode === 'income') && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-1.5 rounded-sm inline-block" style={{ background: '#10b981' }} />Income
+                  </span>
+                )}
+                {(viewMode === 'all' || viewMode === 'expenses') && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-1.5 rounded-sm inline-block" style={{ background: '#f43f5e' }} />Expenses
+                  </span>
+                )}
               </div>
-              <div className="grid grid-cols-7 gap-1">
-                {/* Empty cells for offset */}
-                {Array.from({ length: heatmapData.startDay }).map((_, i) => (
-                  <div key={`empty-${i}`} />
-                ))}
-                {/* Day cells */}
-                {heatmapData.dailyData.map(d => {
-                  const intensity = heatmapData.maxSpend > 0 ? d.expenses / heatmapData.maxSpend : 0
-                  const hasActivity = d.expenses > 0 || d.income > 0
-                  return (
-                    <div
-                      key={d.day}
-                      className="aspect-square rounded-md flex items-center justify-center text-[10px] font-medium relative group cursor-default transition-all"
-                      style={{
-                        background: d.expenses > 0
-                          ? `rgba(244,63,94,${0.1 + intensity * 0.75})`
-                          : d.income > 0
-                            ? 'rgba(16,185,129,0.15)'
-                            : 'rgba(255,255,255,0.03)',
-                        color: hasActivity ? 'var(--text-primary)' : 'var(--text-muted)',
-                        border: `1px solid ${d.expenses > 0 ? `rgba(244,63,94,${0.15 + intensity * 0.3})` : 'transparent'}`,
-                      }}
-                    >
-                      {d.day}
-                      {/* Tooltip on hover */}
-                      {hasActivity && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-10
-                          bg-[var(--bg-card)] border border-[var(--border)] rounded-lg px-2.5 py-1.5
-                          text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
-                          <p className="text-[var(--text-muted)] mb-0.5">{MONTH_NAMES[parseInt(selectedMonthNum)-1]} {d.day}</p>
-                          {d.expenses > 0 && <p className="text-rose-400">-{formatCurrency(d.expenses)}</p>}
-                          {d.income  > 0 && <p className="text-jade-400">+{formatCurrency(d.income)}</p>}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="flex items-center gap-4 mt-3 text-xs text-[var(--text-muted)]">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-sm inline-block" style={{background:'rgba(244,63,94,0.6)'}} />
-                  Spending (darker = more)
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-sm inline-block" style={{background:'rgba(16,185,129,0.3)'}} />
-                  Income
-                </span>
-              </div>
-            </div>
+            </>
           )}
 
           {/* ── DONUT CHART ── */}
@@ -618,20 +604,42 @@ export default function DashboardClient({
       {(showExpenses || showIncome || showInvestments) && (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           {showExpenses && (
-            <PieCard title="Expenses by Category" sub={`${MONTH_FULL[parseInt(selectedMonthNum)-1]} ${selectedYear}`}
-              data={expByCategory} colorFn={getCategoryColor} empty="No expenses this month"
-              onAdd={() => setShowAddExpense(true)} addLabel="+ Add Expense" amountColor="#f43f5e" />
+            <PieCard
+              title="Expenses by Category"
+              sub={`${MONTH_FULL[parseInt(selectedMonthNum) - 1]} ${selectedYear}`}
+              data={expByCategory}
+              colorFn={getCategoryColor}
+              empty="No expenses this month"
+              onAdd={() => setShowAddExpense(true)}
+              addLabel="+ Add Expense"
+              amountColor="#f43f5e"
+            />
           )}
           {showIncome && (
-            <PieCard title="Income by Source" sub={`${MONTH_FULL[parseInt(selectedMonthNum)-1]} ${selectedYear}`}
-              data={incByCategory} colorFn={n => INCOME_CATEGORY_COLORS[n] ?? '#94a3b8'} empty="No income this month"
-              onAdd={() => setShowAddIncome(true)} addLabel="+ Add Income" amountColor="#10b981" />
+            <PieCard
+              title="Income by Source"
+              sub={`${MONTH_FULL[parseInt(selectedMonthNum) - 1]} ${selectedYear}`}
+              data={incByCategory}
+              colorFn={n => INCOME_CATEGORY_COLORS[n] ?? '#94a3b8'}
+              empty="No income this month"
+              onAdd={() => setShowAddIncome(true)}
+              addLabel="+ Add Income"
+              amountColor="#10b981"
+            />
           )}
           {showInvestments && (
-            <PieCard title="Portfolio Breakdown" sub="All time · current value" data={invByCategory}
-              colorFn={n => INVESTMENT_CATEGORY_COLORS[n] ?? '#94a3b8'} empty="No investments yet"
-              onAdd={undefined} addLabel="" amountColor="#f59e0b"
-              addLink="/investments" addLinkLabel="+ Add Investment" />
+            <PieCard
+              title="Portfolio Breakdown"
+              sub="All time · current value"
+              data={invByCategory}
+              colorFn={n => INVESTMENT_CATEGORY_COLORS[n] ?? '#94a3b8'}
+              empty="No investments yet"
+              onAdd={undefined}
+              addLabel=""
+              amountColor="#f59e0b"
+              addLink="/investments"
+              addLinkLabel="+ Add Investment"
+            />
           )}
         </div>
       )}
@@ -746,9 +754,11 @@ export default function DashboardClient({
               ) : (
                 <div className="px-5 py-8 text-center">
                   <p className="text-[var(--text-muted)] text-xs mb-2">No income this month</p>
-                  <button onClick={() => setShowAddIncome(true)}
+                  <button
+                    onClick={() => setShowAddIncome(true)}
                     className="text-xs py-1.5 px-3 rounded-lg font-medium text-white"
-                    style={{ background: '#10b981' }}>
+                    style={{ background: '#10b981' }}
+                  >
                     + Add Income
                   </button>
                 </div>
@@ -759,12 +769,18 @@ export default function DashboardClient({
       )}
 
       {showAddExpense && (
-        <AddExpenseModal userId={userId} onClose={() => setShowAddExpense(false)}
-          onSaved={e => { setExpenses(p => [e, ...p]); setShowAddExpense(false) }} />
+        <AddExpenseModal
+          userId={userId}
+          onClose={() => setShowAddExpense(false)}
+          onSaved={e => { setExpenses(p => [e, ...p]); setShowAddExpense(false) }}
+        />
       )}
       {showAddIncome && (
-        <AddIncomeModal userId={userId} onClose={() => setShowAddIncome(false)}
-          onSaved={i => { setIncome(p => [i, ...p]); setShowAddIncome(false) }} />
+        <AddIncomeModal
+          userId={userId}
+          onClose={() => setShowAddIncome(false)}
+          onSaved={i => { setIncome(p => [i, ...p]); setShowAddIncome(false) }}
+        />
       )}
     </div>
   )
@@ -774,10 +790,16 @@ export default function DashboardClient({
 function PieCard({
   title, sub, data, colorFn, empty, onAdd, addLabel, amountColor, addLink, addLinkLabel,
 }: {
-  title: string; sub: string; data: { name: string; value: number }[]
-  colorFn: (name: string) => string; empty: string
-  onAdd?: () => void; addLabel: string; amountColor: string
-  addLink?: string; addLinkLabel?: string
+  title: string
+  sub: string
+  data: { name: string; value: number }[]
+  colorFn: (name: string) => string
+  empty: string
+  onAdd?: () => void
+  addLabel: string
+  amountColor: string
+  addLink?: string
+  addLinkLabel?: string
 }) {
   return (
     <div className="card p-5">
@@ -819,8 +841,11 @@ function PieCard({
         <div className="h-32 flex flex-col items-center justify-center gap-2">
           <p className="text-[var(--text-muted)] text-xs">{empty}</p>
           {onAdd && (
-            <button onClick={onAdd} className="text-xs py-1 px-3 rounded-lg font-medium text-white"
-              style={{ background: amountColor }}>
+            <button
+              onClick={onAdd}
+              className="text-xs py-1 px-3 rounded-lg font-medium text-white"
+              style={{ background: amountColor }}
+            >
               {addLabel}
             </button>
           )}
