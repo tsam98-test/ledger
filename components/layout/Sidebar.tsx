@@ -7,7 +7,6 @@ import {
   LayoutDashboard, Receipt, Target, LogOut,
   ChevronRight, Wallet, BarChart2,
 } from 'lucide-react'
-import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
@@ -19,9 +18,9 @@ const NAV_ITEMS = [
 ]
 
 export default function Sidebar({ userEmail }: { userEmail: string }) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const supabase = createClient()
+  const pathname  = usePathname()
+  const router    = useRouter()
+  const supabase  = createClient()
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -29,22 +28,56 @@ export default function Sidebar({ userEmail }: { userEmail: string }) {
     router.refresh()
   }
 
+  /* Avatar initials from email */
+  const initials = userEmail ? userEmail.slice(0, 2).toUpperCase() : 'LG'
+
   return (
     <aside
-      className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-64 border-r z-30"
-      style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
+      className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-64 z-30"
+      style={{
+        background:   'rgba(2,5,9,0.95)',
+        borderRight:  '1px solid rgba(99,102,241,0.08)',
+        backdropFilter: 'blur(24px)',
+      }}
     >
-      <div className="px-6 py-7 border-b" style={{ borderColor: 'var(--border)' }}>
+      {/* ── Logo ── */}
+      <div
+        className="px-5 py-6"
+        style={{ borderBottom: '1px solid rgba(99,102,241,0.08)' }}
+      >
         <div className="flex items-center gap-3">
-          <Image src="/Icon.png" alt="Spendora" width={36} height={36} className="rounded-xl flex-shrink-0" />
+          {/* Gem icon */}
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 font-bold animate-gem-pulse"
+            style={{
+              background: 'linear-gradient(135deg, #4338CA, #22D3EE)',
+              boxShadow: '0 0 24px rgba(99,102,241,0.45), 0 0 48px rgba(34,211,238,0.12)',
+            }}
+          >
+            ◈
+          </div>
           <div>
-            <p className="font-display text-xl text-[var(--text-primary)] leading-none">Spendora</p>
-            <p className="text-[10px] text-[var(--text-muted)] mt-0.5 uppercase tracking-widest">Track. Budget. Grow.</p>
+            <p className="font-display text-xl leading-none" style={{ color: 'var(--text-primary)' }}>
+              Ledger
+            </p>
+            <p
+              className="text-[10px] mt-0.5 uppercase tracking-widest"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              Financial Intelligence
+            </p>
           </div>
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-5 space-y-0.5">
+      {/* ── Nav ── */}
+      <nav className="flex-1 px-3 py-5 space-y-0.5 overflow-y-auto">
+        <p
+          className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          Main
+        </p>
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
           return (
@@ -52,29 +85,100 @@ export default function Sidebar({ userEmail }: { userEmail: string }) {
               key={href}
               href={href}
               className={cn(
-                'flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
                 active
-                  ? 'bg-amber-400/10 text-amber-400 border border-amber-400/15'
-                  : 'text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)] border border-transparent'
+                  ? 'text-white'
+                  : 'hover:text-[var(--text-primary)] border border-transparent'
               )}
+              style={
+                active
+                  ? {
+                      background:   'rgba(99,102,241,0.14)',
+                      border:       '1px solid rgba(99,102,241,0.22)',
+                      color:        '#fff',
+                      boxShadow:    '0 0 16px rgba(99,102,241,0.12)',
+                    }
+                  : { color: 'var(--text-secondary)' }
+              }
             >
-              <Icon size={17} className="flex-shrink-0" />
+              {/* Icon wrapper */}
+              <span
+                className="w-[30px] h-[30px] rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{
+                  background: active
+                    ? 'rgba(99,102,241,0.25)'
+                    : 'rgba(255,255,255,0.04)',
+                }}
+              >
+                <Icon size={15} />
+              </span>
+
               {label}
-              {active && <ChevronRight className="ml-auto w-3.5 h-3.5 text-amber-400/60" />}
+
+              {active && (
+                <ChevronRight
+                  className="ml-auto w-3.5 h-3.5"
+                  style={{ color: 'rgba(99,102,241,0.6)' }}
+                />
+              )}
             </Link>
           )
         })}
       </nav>
 
-      <div className="px-3 py-4 border-t" style={{ borderColor: 'var(--border)' }}>
-        <div className="px-3.5 py-2 mb-1">
-          <p className="text-xs text-[var(--text-muted)] truncate">{userEmail}</p>
+      {/* ── Footer: user + sign-out ── */}
+      <div
+        className="px-3 py-4"
+        style={{ borderTop: '1px solid rgba(99,102,241,0.08)' }}
+      >
+        {/* User chip */}
+        <div
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 cursor-default"
+          style={{ background: 'rgba(99,102,241,0.06)' }}
+        >
+          {/* Avatar */}
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+            style={{
+              background: 'linear-gradient(135deg, #4338CA, #22D3EE)',
+              color: '#fff',
+            }}
+          >
+            {initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p
+              className="text-xs font-semibold truncate"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              {userEmail}
+            </p>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+              Pro Plan · Active
+            </p>
+          </div>
         </div>
+
+        {/* Sign out */}
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-lg text-sm font-medium text-[var(--text-muted)] hover:bg-rose-500/10 hover:text-rose-400 transition-all duration-150"
+          className="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+          style={{ color: 'var(--text-muted)' }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(244,63,94,0.08)'
+            ;(e.currentTarget as HTMLButtonElement).style.color = '#F43F5E'
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
+            ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)'
+          }}
         >
-          <LogOut size={16} />
+          <span
+            className="w-[30px] h-[30px] rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'rgba(255,255,255,0.04)' }}
+          >
+            <LogOut size={14} />
+          </span>
           Sign out
         </button>
       </div>
