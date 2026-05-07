@@ -140,3 +140,6 @@ export function exportToCSV(data: Record<string, unknown>[], filename: string): 
   link.click()
   URL.revokeObjectURL(link.href)
 }
+
+// Re-export color maps from types for convenience in components
+export { INVESTMENT_CATEGORY_COLORS, INCOME_CATEGORY_COLORS } from '@/types'

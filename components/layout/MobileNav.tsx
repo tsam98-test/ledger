@@ -3,14 +3,19 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { LayoutDashboard, Receipt, Target, LogOut, TrendingUp } from 'lucide-react'
+import {
+  LayoutDashboard, Receipt, Target, LogOut,
+  TrendingUp, Wallet, BarChart2,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 
 const NAV_ITEMS = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/expenses', label: 'Expenses', icon: Receipt },
-  { href: '/budgets', label: 'Budgets', icon: Target },
+  { href: '/',            label: 'Dashboard',   icon: LayoutDashboard },
+  { href: '/expenses',    label: 'Expenses',    icon: Receipt         },
+  { href: '/income',      label: 'Income',      icon: Wallet          },
+  { href: '/investments', label: 'Investments', icon: BarChart2       },
+  { href: '/budgets',     label: 'Budgets',     icon: Target          },
 ]
 
 export default function MobileNav({ userEmail }: { userEmail: string }) {
@@ -28,24 +33,21 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
   return (
     <>
       {/* Top bar */}
-      <header className="lg:hidden sticky top-0 z-20 flex items-center justify-between px-4 h-14 border-b"
-              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}>
+      <header
+        className="lg:hidden sticky top-0 z-20 flex items-center justify-between px-4 h-14 border-b"
+        style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
+      >
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-amber-400/10 border border-amber-400/20 flex items-center justify-center">
             <TrendingUp className="w-4 h-4 text-amber-400" />
           </div>
           <span className="font-display text-lg text-[var(--text-primary)]">Ledger</span>
         </div>
-
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="btn-ghost p-2"
-          aria-label="Menu"
-        >
+        <button onClick={() => setMenuOpen(!menuOpen)} className="btn-ghost p-2" aria-label="Menu">
           <div className="space-y-1.5">
-            <span className={cn("block h-px w-5 bg-current transition-all", menuOpen && "rotate-45 translate-y-2")} />
-            <span className={cn("block h-px w-5 bg-current transition-all", menuOpen && "opacity-0")} />
-            <span className={cn("block h-px w-5 bg-current transition-all", menuOpen && "-rotate-45 -translate-y-2")} />
+            <span className={cn('block h-px w-5 bg-current transition-all', menuOpen && 'rotate-45 translate-y-2')} />
+            <span className={cn('block h-px w-5 bg-current transition-all', menuOpen && 'opacity-0')} />
+            <span className={cn('block h-px w-5 bg-current transition-all', menuOpen && '-rotate-45 -translate-y-2')} />
           </div>
         </button>
       </header>
@@ -91,9 +93,11 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
         </div>
       )}
 
-      {/* Bottom nav (mobile) */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-20 flex border-t"
-           style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}>
+      {/* Bottom tab bar (mobile) - show first 5 */}
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-20 flex border-t"
+        style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
+      >
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
           return (
@@ -101,11 +105,11 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
               key={href}
               href={href}
               className={cn(
-                'flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors',
+                'flex-1 flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors',
                 active ? 'text-amber-400' : 'text-[var(--text-muted)]'
               )}
             >
-              <Icon size={20} />
+              <Icon size={18} />
               {label}
             </Link>
           )
