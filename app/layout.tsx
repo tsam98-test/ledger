@@ -22,7 +22,7 @@ const dmMono = DM_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Ledger — Personal Finance',
+  title: 'Spendora — Track. Budget. Grow.',
   description: 'Private personal expense tracker',
   robots: 'noindex, nofollow',
   icons: {
