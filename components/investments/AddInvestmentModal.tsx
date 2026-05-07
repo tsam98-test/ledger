@@ -19,10 +19,9 @@ const [form, setForm] = useState({
     name:            '',
     category:        '',
     amount_invested: '',
-    current_value:   '',   // optional
+    current_value:   '',
     date:            format(new Date(), 'yyyy-MM-dd'),
     notes:           '',
-  })
   })
   const [errors, setErrors]           = useState<Record<string, string>>({})
   const [loading, setLoading]         = useState(false)
