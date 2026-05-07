@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 import { useState } from 'react'
 
 const NAV_ITEMS = [
-  { href: '/',            label: 'Dashboard',   icon: LayoutDashboard },
+  { href: '/dashboard-home', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/expenses',    label: 'Expenses',    icon: Receipt         },
   { href: '/income',      label: 'Income',      icon: Wallet          },
   { href: '/investments', label: 'Investments', icon: BarChart2       },
