@@ -49,12 +49,9 @@ export default function LoginPage() {
         const { error: signupError } = await supabase.auth.signUp({
           email: email.trim().toLowerCase(),
           password,
-          options: {
-            emailRedirectTo:
-              typeof window !== 'undefined'
-                ? window.location.origin
-                : undefined,
-          },
+        options: {
+        emailRedirectTo: 'https://YOUR-VERCEL-APP.vercel.app',
+      },
         })
 
         if (signupError) {
