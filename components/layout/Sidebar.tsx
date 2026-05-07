@@ -5,8 +5,9 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard, Receipt, Target, LogOut,
-  TrendingUp, ChevronRight, Wallet, BarChart2,
+  ChevronRight, Wallet, BarChart2,
 } from 'lucide-react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
@@ -38,10 +39,7 @@ export default function Sidebar({ userEmail }: { userEmail: string }) {
           <div className="w-9 h-9 rounded-xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center flex-shrink-0">
             <TrendingUp className="w-5 h-5 text-amber-400" />
           </div>
-          <div>
-            <p className="font-display text-xl text-[var(--text-primary)] leading-none">Ledger</p>
-            <p className="text-[10px] text-[var(--text-muted)] mt-0.5 uppercase tracking-widest">Finance</p>
-          </div>
+          <Image src="/icon.png" alt="Spendora" width={36} height={36} className="rounded-xl flex-shrink-0" />
         </div>
       </div>
 
