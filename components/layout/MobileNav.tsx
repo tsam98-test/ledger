@@ -5,8 +5,9 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard, Receipt, Target, LogOut,
-  TrendingUp, Wallet, BarChart2,
+  Wallet, BarChart2,
 } from 'lucide-react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 
@@ -37,11 +38,9 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
         className="lg:hidden sticky top-0 z-20 flex items-center justify-between px-4 h-14 border-b"
         style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
       >
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-amber-400/10 border border-amber-400/20 flex items-center justify-center">
-            <TrendingUp className="w-4 h-4 text-amber-400" />
+        <Image src="/Icon.png" alt="Spendora" width={28} height={28} className="rounded-lg" />
           </div>
-          <span className="font-display text-lg text-[var(--text-primary)]">Ledger</span>
+          <span className="font-display text-lg text-[var(--text-primary)]">Spendora</span>
         </div>
         <button onClick={() => setMenuOpen(!menuOpen)} className="btn-ghost p-2" aria-label="Menu">
           <div className="space-y-1.5">
