@@ -178,7 +178,7 @@ export function Modal({
     >
       <div
         className="card w-full max-w-md p-6 shadow-glow-lg animate-scale-in"
-        style={{ borderColor: 'rgba(251,191,36,0.12)' }}
+        style={{ borderColor: 'rgba(0,212,170,0.12)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">

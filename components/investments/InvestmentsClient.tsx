@@ -219,7 +219,7 @@ export default function InvestmentsClient({
                 <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false}
                   tickFormatter={(v) => `$${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`} />
                 <Tooltip content={<BarTip />} />
-                <Bar dataKey="invested" name="Invested" fill="rgba(251,191,36,0.3)" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="invested" name="Invested" fill="rgba(0,212,170,0.3)" radius={[3, 3, 0, 0]} />
                 <Bar dataKey="current"  name="Current"  fill="#f59e0b"               radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

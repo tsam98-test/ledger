@@ -166,7 +166,7 @@ export default function BudgetsClient({ initialBudgets, expenses, userId }: Prop
               tickFormatter={(v) => `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="budget" name="budget" fill="rgba(251,191,36,0.2)" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="budget" name="budget" fill="rgba(0,212,170,0.2)" radius={[3, 3, 0, 0]} />
             <Bar dataKey="spent" name="spent" radius={[3, 3, 0, 0]}>
               {chartData.map((entry, i) => (
                 <Cell
@@ -184,7 +184,7 @@ export default function BudgetsClient({ initialBudgets, expenses, userId }: Prop
           </BarChart>
         </ResponsiveContainer>
         <div className="flex items-center gap-4 mt-3 text-xs text-[var(--text-muted)]">
-          <span className="flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm bg-amber-400/20 inline-block" />Budget</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm bg-[rgba(0,212,170,0.2)] inline-block" />Budget</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm bg-jade-500 inline-block" />Spent</span>
         </div>
       </div>
@@ -210,7 +210,7 @@ export default function BudgetsClient({ initialBudgets, expenses, userId }: Prop
                 key={month}
                 className={cn(
                   'card p-5 transition-all',
-                  isCurrent && 'border-amber-400/15',
+                  isCurrent && 'border-[rgba(0,212,170,0.15)]',
                   isOver && 'border-rose-500/20'
                 )}
               >
@@ -218,19 +218,19 @@ export default function BudgetsClient({ initialBudgets, expenses, userId }: Prop
                   <div className="flex items-center gap-2">
                     <Target
                       size={15}
-                      className={isOver ? 'text-rose-400' : isNear ? 'text-amber-400' : 'text-[var(--text-muted)]'}
+                      className={isOver ? 'text-rose-400' : isNear ? 'text-orange-400' : 'text-[var(--text-muted)]'}
                     />
                     <div>
                       <p className="text-sm font-medium text-[var(--text-primary)]">
                         {formatMonth(month)}
                         {isCurrent && (
-                          <span className="ml-2 text-[10px] badge bg-amber-400/10 text-amber-400 border border-amber-400/20">
+                          <span className="ml-2 text-[10px] badge bg-[rgba(0,212,170,0.1)] text-[#00D4AA] border border-[rgba(0,212,170,0.2)]">
                             Current
                           </span>
                         )}
                       </p>
                       {(isOver || isNear) && (
-                        <p className={`text-xs flex items-center gap-1 mt-0.5 ${isOver ? 'text-rose-400' : 'text-amber-400'}`}>
+                        <p className={`text-xs flex items-center gap-1 mt-0.5 ${isOver ? 'text-rose-400' : 'text-orange-400'}`}>
                           <AlertTriangle size={11} />
                           {isOver
                             ? `Over by ${formatCurrency(spent - budgetAmt)}`
@@ -283,7 +283,7 @@ export default function BudgetsClient({ initialBudgets, expenses, userId }: Prop
                       </div>
                       <button
                         onClick={() => startEdit(month)}
-                        className="btn-ghost p-1.5 hover:text-amber-400"
+                        className="btn-ghost p-1.5 hover:text-[#00D4AA]"
                         title={budget ? 'Edit budget' : 'Set budget'}
                       >
                         {budget ? <Pencil size={13} /> : <Plus size={13} />}
@@ -325,12 +325,12 @@ export default function BudgetsClient({ initialBudgets, expenses, userId }: Prop
       {/* Tips */}
       <div className="card p-5 border-dashed">
         <div className="flex items-start gap-3">
-          <TrendingUp size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
+          <TrendingUp size={16} style={{color:"#00D4AA"}} className="flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-[var(--text-primary)] mb-1">Budget Tips</p>
             <ul className="text-xs text-[var(--text-muted)] space-y-1 list-disc list-inside">
-              <li>Click the <span className="text-amber-400">pencil</span> icon next to any month to set a budget</li>
-              <li>Amber bar = over 80% spent · Red bar = over budget</li>
+              <li>Click the <span style={{color:"#00D4AA"}}>pencil</span> icon next to any month to set a budget</li>
+              <li>Teal bar = over 80% spent · Red bar = over budget</li>
               <li>Budgets are monthly and reset automatically each month</li>
             </ul>
           </div>

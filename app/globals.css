@@ -4,35 +4,23 @@
 
 @layer base {
   :root {
-    /* ── Core Backgrounds ── */
-    --bg-primary:    #020509;
-    --bg-secondary:  #05080F;
-    --bg-card:       #080D1A;
-    --bg-card-hover: #0C1222;
-
-    /* ── Borders ── */
-    --border:       rgba(99, 102, 241, 0.08);
-    --border-focus: rgba(99, 102, 241, 0.5);
-
-    /* ── Text ── */
-    --text-primary:   #F0F4FF;
-    --text-secondary: #8B95B0;
-    --text-muted:     #3D4560;
-
-    /* ── Brand Accents ── */
-    --accent:     #6366F1;
-    --accent-dim: rgba(99, 102, 241, 0.10);
-    --accent-glow:rgba(99, 102, 241, 0.28);
-
-    /* ── Semantic ── */
-    --success: #10B981;
-    --danger:  #F43F5E;
-    --warning: #F59E0B;
-    --info:    #22D3EE;
-
-    /* ── Glow helpers ── */
-    --glow-indigo: rgba(99, 102, 241, 0.20);
-    --glow-cyan:   rgba(34, 211, 238, 0.18);
+    --bg-primary: #0a0a12;
+    --bg-secondary: #0f0f1a;
+    --bg-card: #13131f;
+    --bg-card-hover: #18182a;
+    --border: rgba(255, 255, 255, 0.06);
+    --border-focus: rgba(0, 212, 170, 0.5);
+    --text-primary: #eef0f8;
+    --text-secondary: #8890b0;
+    --text-muted: #4a5070;
+    --accent: #00D4AA;
+    --accent-dim: rgba(0, 212, 170, 0.1);
+    --accent-glow: rgba(0, 212, 170, 0.2);
+    --accent-blue: #3C6EE8;
+    --accent-purple: #823CE8;
+    --success: #10b981;
+    --danger: #f43f5e;
+    --warning: #f59e0b;
   }
 
   html {
@@ -49,151 +37,115 @@
     color: var(--accent);
   }
 
-  ::-webkit-scrollbar        { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track  { background: transparent; }
-  ::-webkit-scrollbar-thumb  { background: rgba(99,102,241,0.25); border-radius: 100px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.45); }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #00D4AA, #3C6EE8);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #33DDBB, #5B87F0);
+  }
 }
 
 @layer components {
-  /* ── Card base ── */
   .card {
-    @apply rounded-xl border transition-all duration-200;
-    background: var(--bg-card);
+    @apply rounded-xl border bg-[var(--bg-card)] shadow-card transition-all duration-200;
     border-color: var(--border);
-    box-shadow: 0 2px 0 rgba(255,255,255,0.03) inset, 0 4px 24px rgba(0,0,0,0.5);
-    backdrop-filter: blur(20px);
   }
 
   .card-hover {
-    @apply card;
-  }
-  .card-hover:hover {
-    background: var(--bg-card-hover);
-    border-color: rgba(99,102,241,0.18);
-    box-shadow: 0 2px 0 rgba(255,255,255,0.03) inset,
-                0 8px 40px rgba(0,0,0,0.5),
-                0 0 40px rgba(99,102,241,0.08);
-    transform: translateY(-1px);
+    @apply card hover:bg-[var(--bg-card-hover)] hover:shadow-card-hover hover:border-[rgba(0,212,170,0.15)];
   }
 
-  /* Top-edge light refraction on cards */
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 15%; right: 15%; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.35), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-    border-radius: 100px;
-    pointer-events: none;
-  }
-  .card:hover::before { opacity: 1; }
-
-  /* ── Inputs ── */
   .input {
     @apply w-full rounded-lg px-3.5 py-2.5 text-sm font-body
-      border placeholder:text-[var(--text-muted)]
-      focus:outline-none focus:ring-1
+      bg-[var(--bg-secondary)] text-[var(--text-primary)]
+      border border-[var(--border)]
+      placeholder:text-[var(--text-muted)]
+      focus:outline-none focus:ring-1 focus:ring-[rgba(0,212,170,0.5)] focus:border-[rgba(0,212,170,0.5)]
       transition-all duration-150;
-    background: rgba(255,255,255,0.03);
-    color: var(--text-primary);
-    border-color: var(--border);
   }
-  .input:focus {
-    border-color: rgba(99,102,241,0.5);
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.10);
-    background: rgba(99,102,241,0.05);
-  }
-  .input:disabled { @apply opacity-50 cursor-not-allowed; }
 
-  /* ── Labels ── */
+  .input:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
   .label {
-    @apply block text-xs font-medium tracking-wider uppercase mb-1.5;
-    color: var(--text-secondary);
+    @apply block text-xs font-medium tracking-wider uppercase mb-1.5
+      text-[var(--text-secondary)];
   }
 
-  /* ── Buttons ── */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2
       px-4 py-2.5 rounded-lg text-sm font-medium font-body
-      focus:outline-none focus:ring-2 focus:ring-offset-2
+      text-white
+      focus:outline-none focus:ring-2 focus:ring-[rgba(0,212,170,0.4)] focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]
       transition-all duration-150 cursor-pointer
       disabled:opacity-50 disabled:cursor-not-allowed;
-    background: linear-gradient(135deg, #4338CA, #6366F1);
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(99,102,241,0.40);
-    focus-ring-color: rgba(99,102,241,0.5);
-    focus-ring-offset-color: var(--bg-primary);
+    background: linear-gradient(135deg, #00D4AA 0%, #3C6EE8 100%);
   }
-  .btn-primary:hover {
-    box-shadow: 0 6px 24px rgba(99,102,241,0.55);
+
+  .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #33DDBB 0%, #5B87F0 100%);
     transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0, 212, 170, 0.25);
   }
-  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-primary:active:not(:disabled) {
+    background: linear-gradient(135deg, #00B896 0%, #2A5BD4 100%);
+    transform: translateY(0);
+  }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2
       px-4 py-2.5 rounded-lg text-sm font-medium font-body
-      focus:outline-none transition-all duration-150 cursor-pointer
+      bg-[var(--bg-card)] text-[var(--text-primary)]
+      border border-[var(--border)]
+      hover:bg-[var(--bg-card-hover)] hover:border-[rgba(255,255,255,0.12)]
+      focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]
+      transition-all duration-150 cursor-pointer
       disabled:opacity-50 disabled:cursor-not-allowed;
-    background: rgba(99,102,241,0.06);
-    color: var(--text-primary);
-    border: 1px solid var(--border);
-  }
-  .btn-secondary:hover {
-    background: rgba(99,102,241,0.12);
-    border-color: rgba(99,102,241,0.22);
   }
 
   .btn-danger {
     @apply inline-flex items-center justify-center gap-2
       px-4 py-2.5 rounded-lg text-sm font-medium font-body
-      focus:outline-none transition-all duration-150 cursor-pointer
+      bg-rose-500/10 text-rose-400
+      border border-rose-500/20
+      hover:bg-rose-500/20 hover:border-rose-500/40
+      focus:outline-none focus:ring-2 focus:ring-rose-500/30
+      transition-all duration-150 cursor-pointer
       disabled:opacity-50 disabled:cursor-not-allowed;
-    background: rgba(244,63,94,0.08);
-    color: #F43F5E;
-    border: 1px solid rgba(244,63,94,0.20);
-  }
-  .btn-danger:hover {
-    background: rgba(244,63,94,0.16);
-    border-color: rgba(244,63,94,0.35);
   }
 
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2
       px-3 py-2 rounded-lg text-sm font-medium font-body
-      focus:outline-none transition-all duration-150 cursor-pointer;
-    color: var(--text-secondary);
-  }
-  .btn-ghost:hover {
-    background: rgba(99,102,241,0.07);
-    color: var(--text-primary);
+      text-[var(--text-secondary)]
+      hover:bg-white/5 hover:text-[var(--text-primary)]
+      focus:outline-none
+      transition-all duration-150 cursor-pointer;
   }
 
-  /* ── Stat cards ── */
   .stat-card {
-    @apply card p-5 flex flex-col gap-2 relative overflow-hidden;
+    @apply card p-5 flex flex-col gap-2;
   }
-  /* Bottom accent bar */
-  .stat-card::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, #6366F1, #22D3EE);
-    opacity: 0;
-    transition: opacity 0.25s;
-  }
-  .stat-card:hover::after { opacity: 1; }
 
-  /* ── Badge ── */
   .badge {
     @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium;
   }
 
-  /* ── Skeleton ── */
   .skeleton {
-    @apply rounded-lg animate-pulse;
+    @apply rounded-lg bg-[var(--bg-card)] animate-pulse;
     background: linear-gradient(
       90deg,
       var(--bg-card) 25%,
@@ -204,72 +156,46 @@
     animation: shimmer 2s linear infinite;
   }
 
-  /* ── Table ── */
   .table-row {
-    @apply border-b transition-colors duration-100;
-    border-color: var(--border);
+    @apply border-b border-[var(--border)] hover:bg-white/[0.02] transition-colors duration-100;
   }
-  .table-row:hover { background: rgba(99,102,241,0.04); }
-  .table-cell { @apply px-4 py-3.5 text-sm; }
 
-  /* ── Divider ── */
+  .table-cell {
+    @apply px-4 py-3.5 text-sm;
+  }
+
   .divider {
-    @apply border-t my-4;
-    border-color: var(--border);
-  }
-
-  /* ── Custom Recharts tooltip ── */
-  .custom-tooltip {
-    @apply card p-3 text-sm;
-    border-color: rgba(99,102,241,0.20) !important;
-    background: rgba(8,13,26,0.95) !important;
-    box-shadow: 0 0 30px rgba(99,102,241,0.15), 0 8px 32px rgba(0,0,0,0.6) !important;
+    @apply border-t border-[var(--border)] my-4;
   }
 }
 
 @layer utilities {
   .text-gradient {
-    background: linear-gradient(120deg, #A5B4FC, #22D3EE 50%, #818CF8);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer-text 4s linear infinite;
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #00D4AA 0%, #3C6EE8 50%, #823CE8 100%);
   }
 
-  .glow-indigo {
-    text-shadow: 0 0 20px rgba(99,102,241,0.45);
+  .glow-teal {
+    text-shadow: 0 0 20px rgba(0, 212, 170, 0.5);
   }
 
-  .glow-cyan {
-    text-shadow: 0 0 20px rgba(34,211,238,0.35);
+  .glow-amber {
+    text-shadow: 0 0 20px rgba(0, 212, 170, 0.4);
   }
 
-  /* Ambient orb layer — add to a fixed div wrapping the whole app */
-  .orb-layer {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
-  }
-  .orb {
-    position: absolute; border-radius: 50%;
-    filter: blur(110px); will-change: transform;
-    animation: orb-drift ease-in-out infinite;
+  .surface-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
   }
 }
 
-/* ── Keyframes ── */
-@keyframes shimmer-text {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
+.recharts-tooltip-wrapper {
+  outline: none !important;
 }
 
-@keyframes orb-drift {
-  0%, 100% { transform: translate(0,0) scale(1); }
-  33%       { transform: translate(30px,-20px) scale(1.03); }
-  66%       { transform: translate(-20px,28px) scale(0.97); }
+.custom-tooltip {
+  @apply card p-3 text-sm !border-[var(--border)];
 }
 
-/* Recharts tooltip wrapper */
-.recharts-tooltip-wrapper { outline: none !important; }
-
-/* Focus visible only */
-*:focus:not(:focus-visible) { outline: none; }
+*:focus:not(:focus-visible) {
+  outline: none;
+}

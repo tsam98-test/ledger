@@ -55,27 +55,18 @@ export default function LoginPage() {
       {/* Teal glow top-left */}
       <div
         className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle, rgba(0,212,170,0.12) 0%, transparent 70%)',
-        }}
+        style={{ background: 'radial-gradient(circle, rgba(0,212,170,0.12) 0%, transparent 70%)' }}
       />
-
       {/* Purple glow bottom-right */}
       <div
         className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle, rgba(130,60,232,0.12) 0%, transparent 70%)',
-        }}
+        style={{ background: 'radial-gradient(circle, rgba(130,60,232,0.12) 0%, transparent 70%)' }}
       />
-
       {/* Blue glow center */}
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle, rgba(60,110,232,0.07) 0%, transparent 70%)',
-        }}
+        style={{ background: 'radial-gradient(circle, rgba(60,110,232,0.07) 0%, transparent 70%)' }}
       />
-
       {/* Grid pattern */}
       <div
         className="absolute inset-0 opacity-[0.025] pointer-events-none"
@@ -89,17 +80,10 @@ export default function LoginPage() {
       />
 
       <div className="w-full max-w-sm relative animate-slide-up">
-
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="inline-flex mb-4">
-            <Image
-              src="/Icon.png"
-              alt="Spendora"
-              width={72}
-              height={72}
-              className="rounded-2xl"
-            />
+            <Image src="/Icon.png" alt="Spendora" width={72} height={72} className="rounded-2xl" />
           </div>
           <h1 className="font-display text-3xl text-[var(--text-primary)] tracking-tight">
             Spendora
@@ -117,9 +101,7 @@ export default function LoginPage() {
             boxShadow: '0 0 40px rgba(0,212,170,0.05), 0 0 80px rgba(130,60,232,0.05)',
           }}
         >
-          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-6">
-            Sign in
-          </h2>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-6">Sign in</h2>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
@@ -178,11 +160,8 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all duration-150 disabled:opacity-50"
-              style={{
-                background: 'linear-gradient(135deg, #00D4AA 0%, #3C6EE8 50%, #823CE8 100%)',
-                color: '#ffffff',
-              }}
+              className="w-full mt-2 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all duration-150 disabled:opacity-50 text-white"
+              style={{ background: 'linear-gradient(135deg, #00D4AA 0%, #3C6EE8 50%, #823CE8 100%)' }}
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">

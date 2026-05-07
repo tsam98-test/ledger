@@ -67,14 +67,14 @@ export function calcPercent(value: number, total: number): number {
 export function getBudgetStatusColor(spent: number, budget: number): string {
   const pct = (spent / budget) * 100
   if (pct >= 100) return 'text-rose-400'
-  if (pct >= 80) return 'text-amber-400'
+  if (pct >= 80) return 'text-orange-400'
   return 'text-jade-400'
 }
 
 export function getBudgetBarColor(spent: number, budget: number): string {
   const pct = (spent / budget) * 100
   if (pct >= 100) return 'bg-rose-500'
-  if (pct >= 80) return 'bg-amber-400'
+  if (pct >= 80) return 'bg-orange-400'
   return 'bg-jade-500'
 }
 
