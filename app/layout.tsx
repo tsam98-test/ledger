@@ -24,7 +24,10 @@ const dmMono = DM_Mono({
 export const metadata: Metadata = {
   title: 'Ledger — Personal Finance',
   description: 'Private personal expense tracker',
-  robots: 'noindex, nofollow', // Don't index private app
+  robots: 'noindex, nofollow',
+  icons: {
+    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📈</text></svg>',
+  },
 }
 
 export default function RootLayout({
