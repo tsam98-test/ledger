@@ -19,7 +19,7 @@ export default function EditInvestmentModal({ investment, userId, onClose, onSav
     name:            investment.name,
     category:        investment.category,
     amount_invested: String(investment.amount_invested),
-    current_value:   String(investment.current_value),
+    current_value:   investment.current_value != null ? String(investment.current_value) : '',
     date:            investment.date,
     notes:           investment.notes ?? '',
   })
@@ -33,7 +33,7 @@ export default function EditInvestmentModal({ investment, userId, onClose, onSav
     if (!form.name.trim())                     e.name            = 'Enter investment name'
     if (!form.category)                        e.category        = 'Select a category'
     if (!validateAmount(form.amount_invested)) e.amount_invested = 'Enter a valid amount'
-    if (!form.current_value || isNaN(parseFloat(form.current_value)) || parseFloat(form.current_value) < 0)
+    if (form.current_value !== '' && (isNaN(parseFloat(form.current_value)) || parseFloat(form.current_value) < 0))
                                                e.current_value   = 'Enter a valid current value'
     if (!form.date)                            e.date            = 'Select a date'
     setErrors(e)
@@ -52,7 +52,7 @@ export default function EditInvestmentModal({ investment, userId, onClose, onSav
         name:            form.name.trim(),
         category:        form.category,
         amount_invested: parseFloat(form.amount_invested),
-        current_value:   parseFloat(form.current_value),
+        current_value:   form.current_value !== '' ? parseFloat(form.current_value) : null,
         date:            form.date,
         notes:           form.notes.trim() || null,
         updated_at:      new Date().toISOString(),
@@ -66,10 +66,10 @@ export default function EditInvestmentModal({ investment, userId, onClose, onSav
     onSaved(data as Investment)
   }
 
-  const invested = parseFloat(form.amount_invested) || 0
-  const current  = parseFloat(form.current_value) || 0
-  const ret      = current - invested
-  const pct      = invested > 0 ? (ret / invested) * 100 : 0
+  const invested    = parseFloat(form.amount_invested) || 0
+  const current     = form.current_value !== '' ? parseFloat(form.current_value) : null
+  const ret         = current != null ? current - invested : null
+  const pct         = invested > 0 && ret != null ? (ret / invested) * 100 : null
 
   return (
     <Modal title="Edit Investment" onClose={onClose}>
@@ -116,11 +116,11 @@ export default function EditInvestmentModal({ investment, userId, onClose, onSav
           </div>
         </div>
 
-        {invested > 0 && (
+        {invested > 0 && ret != null && (
           <div className="px-3.5 py-2.5 rounded-lg bg-white/[0.03] border text-xs" style={{ borderColor: 'var(--border)' }}>
             <span className={ret >= 0 ? 'text-jade-400' : 'text-rose-400'}>
               Return: {ret >= 0 ? '+' : ''}{ret.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-              {' '}({pct >= 0 ? '+' : ''}{pct.toFixed(2)}%)
+              {' '}({pct! >= 0 ? '+' : ''}{pct!.toFixed(2)}%)
             </span>
           </div>
         )}
