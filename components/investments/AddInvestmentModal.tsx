@@ -15,13 +15,14 @@ interface Props {
 }
 
 export default function AddInvestmentModal({ userId, onClose, onSaved }: Props) {
-  const [form, setForm] = useState({
+const [form, setForm] = useState({
     name:            '',
     category:        '',
     amount_invested: '',
-    current_value:   '',
+    current_value:   '',   // optional
     date:            format(new Date(), 'yyyy-MM-dd'),
     notes:           '',
+  })
   })
   const [errors, setErrors]           = useState<Record<string, string>>({})
   const [loading, setLoading]         = useState(false)
@@ -30,12 +31,12 @@ export default function AddInvestmentModal({ userId, onClose, onSaved }: Props) 
 
   function validate(): boolean {
     const e: Record<string, string> = {}
-    if (!form.name.trim())                    e.name            = 'Enter investment name'
-    if (!form.category)                       e.category        = 'Select a category'
+    if (!form.name.trim())                     e.name            = 'Enter investment name'
+    if (!form.category)                        e.category        = 'Select a category'
     if (!validateAmount(form.amount_invested)) e.amount_invested = 'Enter a valid amount invested'
-    if (!form.current_value || isNaN(parseFloat(form.current_value)) || parseFloat(form.current_value) < 0)
-                                              e.current_value   = 'Enter a valid current value (0 or more)'
-    if (!form.date)                           e.date            = 'Select a date'
+    if (form.current_value !== '' && (isNaN(parseFloat(form.current_value)) || parseFloat(form.current_value) < 0))
+                                               e.current_value   = 'Enter a valid current value (0 or more)'
+    if (!form.date)                            e.date            = 'Select a date'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -46,14 +47,14 @@ export default function AddInvestmentModal({ userId, onClose, onSaved }: Props) 
     setLoading(true)
     setServerError(null)
 
-    const { data, error } = await supabase
+  const { data, error } = await supabase
       .from('investments')
       .insert({
         user_id:         userId,
         name:            form.name.trim(),
         category:        form.category,
         amount_invested: parseFloat(form.amount_invested),
-        current_value:   parseFloat(form.current_value),
+        current_value:   form.current_value !== '' ? parseFloat(form.current_value) : null,
         date:            form.date,
         notes:           form.notes.trim() || null,
       })
@@ -101,10 +102,10 @@ export default function AddInvestmentModal({ userId, onClose, onSaved }: Props) 
             {errors.amount_invested && <p className="text-rose-400 text-xs mt-1">{errors.amount_invested}</p>}
           </div>
           <div>
-            <label className="label">Current Value</label>
+            <label className="label">Current Value <span className="normal-case font-normal text-[var(--text-muted)]">(optional)</span></label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm">$</span>
-              <input type="number" step="0.01" min="0" placeholder="0.00"
+              <input type="number" step="0.01" min="0" placeholder="Leave blank to add later"
                 value={form.current_value}
                 onChange={(e) => setForm((f) => ({ ...f, current_value: e.target.value }))}
                 className={cn('input pl-7', errors.current_value && 'border-rose-500/50')} />
@@ -114,7 +115,7 @@ export default function AddInvestmentModal({ userId, onClose, onSaved }: Props) 
         </div>
 
         {/* Live return preview */}
-        {form.amount_invested && form.current_value && !isNaN(parseFloat(form.amount_invested)) && !isNaN(parseFloat(form.current_value)) && parseFloat(form.amount_invested) > 0 && (
+        {form.amount_invested && form.current_value !== '' && !isNaN(parseFloat(form.amount_invested)) && !isNaN(parseFloat(form.current_value)) && parseFloat(form.amount_invested) > 0 && (
           <div className="px-3.5 py-2.5 rounded-lg bg-white/[0.03] border text-xs" style={{ borderColor: 'var(--border)' }}>
             {(() => {
               const invested = parseFloat(form.amount_invested)
