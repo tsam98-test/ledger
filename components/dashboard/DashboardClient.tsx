@@ -170,14 +170,13 @@ export default function DashboardClient({
     { id: 'line',  label: 'Line',  icon: <TrendingUp size={13} /> },
     { id: 'donut', label: 'Donut', icon: <PieIcon size={13} />    },
   ]
-    const dashStyle = { zoom: '0.93' } as React.CSSProperties
-
+    
   return (
-    <div className="space-y-5 pb-24 lg:pb-8 animate-fade-in" style={dashStyle}>
+    <div className="space-y-5 pb-24 lg:pb-8 animate-fade-in">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">
+         <h1 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">
             Dashboard
           </h1>
           <p className="text-white/50 text-sm mt-1">
