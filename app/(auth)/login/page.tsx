@@ -12,12 +12,41 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  // NEW
+  const [isSignup, setIsSignup] = useState(false)
+  const [isForgotPassword, setIsForgotPassword] = useState(false)
 
   // NEW
   const [isSignup, setIsSignup] = useState(false)
 
   const router = useRouter()
   const supabase = createClient()
+
+ async function handleForgotPassword(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setSuccessMessage(null)
+    setLoading(true)
+
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address.')
+      setLoading(false)
+      return
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      setSuccessMessage('Password reset link sent! Check your email.')
+    }
+    setLoading(false)
+  }
 
   async function handleAuth(e: React.FormEvent) {
     e.preventDefault()
@@ -36,9 +65,16 @@ export default function LoginPage() {
       return
     }
 
-    // PASSWORD VALIDATION FOR SIGNUP
+   // PASSWORD VALIDATION FOR SIGNUP
     if (isSignup && password.length < 6) {
       setError('Password must be at least 6 characters.')
+      setLoading(false)
+      return
+    }
+
+    // CONFIRM PASSWORD CHECK
+    if (isSignup && password !== confirmPassword) {
+      setError('Passwords do not match.')
       setLoading(false)
       return
     }
@@ -168,9 +204,69 @@ export default function LoginPage() {
           }}
         >
           <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-6">
-            {isSignup ? 'Create Account' : 'Sign in'}
+            {isForgotPassword ? 'Reset Password' : isSignup ? 'Create Account' : 'Sign in'}
           </h2>
 
+          {/* FORGOT PASSWORD FORM */}
+          {isForgotPassword ? (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <label htmlFor="email" className="label">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input pl-10"
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    required
+                    disabled={loading}
+                    style={{ borderColor: 'rgba(0,212,170,0.15)' }}
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm animate-fade-in">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm animate-fade-in">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                  {successMessage}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-2 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all duration-150 disabled:opacity-50 text-white"
+                style={{ background: 'linear-gradient(135deg, #00D4AA 0%, #3C6EE8 50%, #823CE8 100%)' }}
+              >
+                {loading ? 'Sending...' : 'Send Reset Link'}
+              </button>
+
+              <div className="mt-3 text-center text-sm">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotPassword(false)
+                    setError(null)
+                    setSuccessMessage(null)
+                  }}
+                  className="text-cyan-400 hover:text-cyan-300 transition-colors"
+                >
+                  ← Back to Sign in
+                </button>
+              </div>
+            </form>
+          ) : (
           <form onSubmit={handleAuth} className="space-y-4">
             {/* EMAIL */}
             <div>
@@ -242,12 +338,83 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+          </div>
+            </div>
+
+        </div>
+            </div>
+
+            {/* FORGOT PASSWORD LINK — login only */}
+            {!isSignup && (
+              <div className="text-right -mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotPassword(true)
+                    setError(null)
+                    setSuccessMessage(null)
+                  }}
+                  className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
 
             {/* ERROR */}
+
+            {/* CONFIRM PASSWORD — signup only */}
+            {isSignup && (
+              <div>
+                <label htmlFor="confirmPassword" className="label">
+                  Confirm Password
+                </label>
+
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+
+                  <input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="input pl-10 pr-10"
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                    required
+                    disabled={loading}
+                    style={{ borderColor: 'rgba(0,212,170,0.15)' }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+        
+           {/* ERROR */}
             {error && (
               <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm animate-fade-in">
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-400 flex-shrink-0" />
                 {error}
+              </div>
+            )}
+
+            {/* SUCCESS */}
+            {successMessage && (
+              <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm animate-fade-in">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                {successMessage}
               </div>
             )}
 
@@ -295,6 +462,8 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+        </form>
+          )} {/* end of isForgotPassword conditional */}
 
           {/* TOGGLE */}
           <div className="mt-5 text-center text-sm">
@@ -309,6 +478,7 @@ export default function LoginPage() {
                   onClick={() => {
                     setIsSignup(false)
                     setError(null)
+                    setConfirmPassword('')
                   }}
                   className="ml-2 text-cyan-400 hover:text-cyan-300 transition-colors"
                 >
