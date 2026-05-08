@@ -1,5 +1,19 @@
 'use client'
 
+// ── Daily motivational quote ──
+const QUOTES = [
+  { text: "Do not save what is left after spending, but spend what is left after saving.", author: "Warren Buffett", tag: "Saving" },
+  { text: "A budget is telling your money where to go instead of wondering where it went.", author: "Dave Ramsey", tag: "Budgeting" },
+  { text: "Financial freedom is available to those who learn about it and work for it.", author: "Robert Kiyosaki", tag: "Freedom" },
+  { text: "It's not about how much money you make, but how much money you keep.", author: "Robert Kiyosaki", tag: "Wealth" },
+  { text: "The habit of saving is itself an education; it fosters every virtue.", author: "T.T. Munger", tag: "Habits" },
+  { text: "Beware of little expenses. A small leak will sink a great ship.", author: "Benjamin Franklin", tag: "Expenses" },
+  { text: "An investment in knowledge pays the best interest.", author: "Benjamin Franklin", tag: "Investing" },
+  { text: "Small daily improvements over time lead to stunning results.", author: "Robin Sharma", tag: "Growth" },
+]
+
+const todayQuote = QUOTES[new Date().getDate() % QUOTES.length]
+
 import { useState, useMemo } from 'react'
 import { format, parseISO, getDaysInMonth } from 'date-fns'
 import {
@@ -144,9 +158,15 @@ export default function DashboardClient({
     if (!active || !payload?.length) return null
     return (
       <div className="custom-tooltip space-y-1 min-w-[140px]">
-        <p className="text-white/60 text-xs font-medium mb-1.5">
-          {MONTH_FULL[parseInt(selectedMonthNum) - 1]} {label}
-        </p>
+       <p className="text-white/50 text-sm mt-1">
+  {MONTH_FULL[parseInt(selectedMonthNum) - 1]} {selectedYear}
+</p>
+<p className="text-white/35 text-xs mt-1.5 italic max-w-md leading-relaxed">
+  "{todayQuote.text}"
+  <span className="not-italic font-semibold text-white/25 ml-1">
+    — {todayQuote.author}
+  </span>
+</p>
         {payload.map((p: any) => (
           <div key={p.name} className="flex items-center justify-between gap-4 text-xs">
             <span style={{ color: p.fill }} className="font-medium">{p.name}</span>
