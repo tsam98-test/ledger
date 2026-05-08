@@ -258,6 +258,47 @@ export default function DashboardClient({
           </button>
         </div>
       </div>
+      {/* ── Live Time + Currency Bar ── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-xl"
+        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+
+        {/* Clock */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ background: 'rgba(96,212,180,0.12)', border: '1px solid rgba(96,212,180,0.2)' }}>
+            <span style={{ fontSize: 14 }}>🕐</span>
+          </div>
+          <div>
+            <p className="font-mono font-bold text-sm leading-none" style={{ color: '#60d4b4' }}>{time}</p>
+            <p className="text-white/40 text-xs mt-0.5">{date}</p>
+          </div>
+        </div>
+
+        <div className="h-5 w-px bg-white/10 hidden sm:block" />
+
+        {/* Currency Pairs */}
+        <div className="flex items-center gap-5 flex-wrap">
+          {currencyRates ? (
+            <>
+              {[
+                { label: 'USD/CAD', value: currencyRates.CAD, color: '#34d399' },
+                { label: 'USD/EUR', value: currencyRates.EUR, color: '#38bdf8' },
+                { label: 'USD/INR', value: currencyRates.INR, color: '#fbbf24' },
+              ].map(({ label, value, color }) => (
+                <div key={label} className="flex flex-col items-center gap-0.5">
+                  <span className="text-white/35 text-xs font-medium">{label}</span>
+                  <span className="font-mono font-bold text-sm" style={{ color }}>
+                    {value?.toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </>
+          ) : (
+            <span className="text-white/30 text-xs animate-pulse">Fetching rates...</span>
+          )}
+          <span className="text-white/15 text-xs hidden sm:inline">1 USD base</span>
+        </div>
+      </div>
 
       {/* ── Filters ── */}
       <div className="card p-3.5">
