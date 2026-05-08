@@ -49,7 +49,7 @@ export default function LoginPage() {
           password,
           options: {
             emailRedirectTo:
-              'https://YOUR-VERCEL-APP.vercel.app/reset-password',
+              'https://spendora-alpha-azure.vercel.app/reset-password',
           },
         })
 
@@ -98,7 +98,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.resetPasswordForEmail(
         email.trim().toLowerCase(),
         {
-          redirectTo: 'https://YOUR-VERCEL-APP.vercel.app/reset-password',
+          redirectTo: 'https://spendora-alpha-azure.vercel.app/reset-password',
         }
       )
 
