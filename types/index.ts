@@ -106,14 +106,14 @@ export interface Investment {
 }
 
 export const INVESTMENT_CATEGORIES = [
-  'Stocks',  'CFD - Gold', 'Futures','ETF', 'Mutual Fund', 'Crypto', 'Real Estate',
+  'Stocks',  'Commodities', 'Futures','ETF', 'Mutual Fund', 'Crypto', 'Real Estate',
   'Bonds', 'Fixed Deposit', 'PPF/NPS',
   'Other',
 ] as const
 
 export const INVESTMENT_CATEGORY_COLORS: Record<string, string> = {
   Stocks:             '#f59e0b',
-  'CFD - Gold':       '#06b6d4',
+  Commodities:        '#06b6d4',
   Futures:            '#8b5cf6',
   'Mutual Fund':      '#8b5cf6',
   ETF:                '#3b82f6',
