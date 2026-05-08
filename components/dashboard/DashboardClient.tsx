@@ -503,41 +503,17 @@ export default function DashboardClient({
           <div className="h-3 rounded-full bg-white/8 overflow-hidden relative">
             {/* Solid spend bar */}
             <div
-              className={`h-full rounded-full transition-all duration-700 ${getBudgetBarColor(totalExpenses, budgetAmt)}`}
-              style={{ width: `${budgetPct}%` }}
-            />
-            {/* Dashed projected-overage extension — only shown when projection > current spend */}
-            {projectedSpendData.isCurrentMonth && dashedWidth > 0 && (
-              <div
-                className="absolute top-0 h-full rounded-r-full"
-                style={{
-                  left: `${dashedStart}%`,
-                  width: `${dashedWidth}%`,
-                  background: 'rgba(251,113,133,0.18)',
-                  borderLeft: '2px dashed #fb7185',
-                  // Make the right edge slightly rounded via inline style since overflow:hidden clips it
-                }}
-              />
-            )}
+  className="h-full rounded-full transition-all duration-700"
+  style={{
+    width: `${budgetPct}%`,
+    background: budgetPct >= 100 ? '#ef4444' : budgetPct >= 80 ? '#f97316' : '#a78bfa',
+  }}
+/>
           </div>
 
           <div className="flex justify-between mt-2 text-xs font-medium">
             <span className="text-white/40">{budgetPct}% used</span>
             <div className="flex items-center gap-3">
-              {/* Projected spend label — shown for current month with projection data */}
-              {projectedSpendData.isCurrentMonth && projectedSpendData.projectedSpend > 0 && (
-                <span
-                  className="flex items-center gap-1"
-                  style={{ color: projectedOverBudget ? '#fb7185' : 'rgba(255,255,255,0.35)' }}
-                >
-                  <span
-                    className="inline-block w-3 border-t border-dashed"
-                    style={{ borderColor: projectedOverBudget ? '#fb7185' : 'rgba(255,255,255,0.3)' }}
-                  />
-                  Projected {fmt(projectedSpendData.projectedSpend)}
-                  {projectedOverBudget && ' ⚠️'}
-                </span>
-              )}
               {budgetPct >= 80 && (
                 <span className={budgetPct >= 100 ? 'text-rose-400' : 'text-orange-400'}>
                   {budgetPct >= 100 ? '⚠️ Over budget' : '⚡ Nearing limit'}
