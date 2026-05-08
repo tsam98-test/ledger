@@ -1,5 +1,27 @@
 'use client'
 
+import { useState, useMemo, useEffect } from 'react'
+import { format, parseISO, getDaysInMonth } from 'date-fns'
+import {
+  TrendingUp, TrendingDown, Receipt, Target, Wallet, BarChart2,
+  ArrowUpRight, ArrowDownRight, X, Plus, ChevronLeft, ChevronRight,
+  LayoutDashboard, PieChart as PieIcon, BarChart,
+} from 'lucide-react'
+import {
+  ResponsiveContainer, BarChart as ReBarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell,
+  LineChart, Line,
+} from 'recharts'
+import type { Expense, Income, Investment, Budget } from '@/types'
+import { INVESTMENT_CATEGORY_COLORS, INCOME_CATEGORY_COLORS } from '@/types'
+import {
+  formatCurrency,
+  getBudgetBarColor, getBudgetStatusColor, calcPercent, getCategoryColor, cn,
+} from '@/lib/utils'
+import Link from 'next/link'
+import AddExpenseModal from '@/components/expenses/AddExpenseModal'
+import AddIncomeModal from '@/components/income/AddIncomeModal'
+
 // ── Daily motivational quote ──
 const QUOTES = [
   { text: "Do not save what is left after spending, but spend what is left after saving.", author: "Warren Buffett", tag: "Saving" },
@@ -42,28 +64,6 @@ function useCurrencyRates() {
   }, [])
   return rates
 }
-
-17: import { useState, useMemo, useEffect } from 'react'
-import { format, parseISO, getDaysInMonth } from 'date-fns'
-import {
-  TrendingUp, TrendingDown, Receipt, Target, Wallet, BarChart2,
-  ArrowUpRight, ArrowDownRight, X, Plus, ChevronLeft, ChevronRight,
-  LayoutDashboard, PieChart as PieIcon, BarChart,
-} from 'lucide-react'
-import {
-  ResponsiveContainer, BarChart as ReBarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell,
-  LineChart, Line,
-} from 'recharts'
-import type { Expense, Income, Investment, Budget } from '@/types'
-import { INVESTMENT_CATEGORY_COLORS, INCOME_CATEGORY_COLORS } from '@/types'
-import {
-  formatCurrency,
-  getBudgetBarColor, getBudgetStatusColor, calcPercent, getCategoryColor, cn,
-} from '@/lib/utils'
-import Link from 'next/link'
-import AddExpenseModal from '@/components/expenses/AddExpenseModal'
-import AddIncomeModal from '@/components/income/AddIncomeModal'
 
 type ViewMode  = 'all' | 'income' | 'expenses' | 'investments' | 'budget'
 type ChartType = 'daily' | 'line' | 'donut'
