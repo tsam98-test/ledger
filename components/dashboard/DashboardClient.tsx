@@ -158,15 +158,9 @@ export default function DashboardClient({
     if (!active || !payload?.length) return null
     return (
       <div className="custom-tooltip space-y-1 min-w-[140px]">
-       <p className="text-white/50 text-sm mt-1">
-  {MONTH_FULL[parseInt(selectedMonthNum) - 1]} {selectedYear}
-</p>
-<p className="text-white/35 text-xs mt-1.5 italic max-w-md leading-relaxed">
-  "{todayQuote.text}"
-  <span className="not-italic font-semibold text-white/25 ml-1">
-    — {todayQuote.author}
-  </span>
-</p>
+     <p className="text-white/60 text-xs font-medium mb-1.5">
+       {MONTH_FULL[parseInt(selectedMonthNum) - 1]} {label}
+     </p>
         {payload.map((p: any) => (
           <div key={p.name} className="flex items-center justify-between gap-4 text-xs">
             <span style={{ color: p.fill }} className="font-medium">{p.name}</span>
@@ -200,7 +194,13 @@ export default function DashboardClient({
             Dashboard
           </h1>
           <p className="text-white/50 text-sm mt-1">
-            {MONTH_FULL[parseInt(selectedMonthNum) - 1]} {selectedYear} · Your money at a glance
+             {MONTH_FULL[parseInt(selectedMonthNum) - 1]} {selectedYear}
+           </p>
+          <p className="text-white/35 text-xs mt-1.5 italic max-w-md leading-relaxed">
+            "{todayQuote.text}"
+             <span className="not-italic font-semibold text-white/25 ml-1">
+               — {todayQuote.author}
+             </span>
           </p>
         </div>
         <div className="flex items-center gap-2">
