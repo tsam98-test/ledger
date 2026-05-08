@@ -53,17 +53,6 @@ function useLiveClock() {
   return { time, date }
 }
 
-// ── Currency Rates ──
-function useCurrencyRates() {
-  const [rates, setRates] = useState<Record<string, number> | null>(null)
-  useEffect(() => {
-    fetch('https://api.frankfurter.app/latest?from=USD&to=CAD,EUR,INR')
-      .then(r => r.json())
-      .then(data => setRates(data.rates))
-      .catch(() => setRates(null))
-  }, [])
-  return rates
-}
 
 type ViewMode  = 'all' | 'income' | 'expenses' | 'investments' | 'budget'
 type ChartType = 'daily' | 'line' | 'donut'
@@ -111,28 +100,10 @@ export default function DashboardClient({
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [showAddIncome,  setShowAddIncome]  = useState(false)
 
-  const { time, date }  = useLiveClock()
-  const currencyRates   = useCurrencyRates()
-  const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'CAD' | 'EUR' | 'INR'>('USD')
-
-  const CURRENCY_SYMBOLS: Record<string, string> = {
-    USD: '$', CAD: 'CA$', EUR: '€', INR: '₹',
-  }
-
-  function convert(amount: number): number {
-    if (!currencyRates || selectedCurrency === 'USD') return amount
-    const rateMap: Record<string, number> = {
-      CAD: currencyRates.CAD,
-      EUR: currencyRates.EUR,
-      INR: currencyRates.INR,
-    }
-    return amount * (rateMap[selectedCurrency] ?? 1)
-  }
+  const { time, date } = useLiveClock()
 
   function fmt(amount: number): string {
-    const converted = convert(amount)
-    const symbol = CURRENCY_SYMBOLS[selectedCurrency]
-    return `${symbol}${converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    return formatCurrency(amount)
   }
 
   const selectedYear     = selectedMonth.slice(0, 4)
@@ -268,27 +239,8 @@ export default function DashboardClient({
             🕐 {time} · {date}
           </p>
 
-          {/* Buttons + Currency selector */}
+          {/* Buttons */}
           <div className="flex items-center gap-2">
-
-            {/* Currency Dropdown */}
-            <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl border"
-              style={{ background: 'rgba(251,191,36,0.08)', borderColor: 'rgba(251,191,36,0.25)' }}>
-              <span className="text-xs font-semibold" style={{ color: 'rgba(251,191,36,0.7)' }}>
-                {CURRENCY_SYMBOLS[selectedCurrency]}
-              </span>
-              <select
-                value={selectedCurrency}
-                onChange={e => setSelectedCurrency(e.target.value as 'USD' | 'CAD' | 'EUR' | 'INR')}
-                className="appearance-none bg-transparent text-xs font-bold cursor-pointer focus:outline-none"
-                style={{ color: '#fbbf24', colorScheme: 'dark' }}
-              >
-                <option value="USD">USD</option>
-                <option value="CAD">CAD</option>
-                <option value="EUR">EUR</option>
-                <option value="INR">INR</option>
-              </select>
-            </div>
 
             <button
               onClick={() => setShowAddIncome(true)}
@@ -558,7 +510,7 @@ export default function DashboardClient({
                     axisLine={false} tickLine={false} interval={4} />
                   <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
                     axisLine={false} tickLine={false}
-                    tickFormatter={v => `${CURRENCY_SYMBOLS[selectedCurrency]}${v >= 1000 ? `${(convert(v) / 1000).toFixed(1)}k` : convert(v).toFixed(0)}`} />
+                    tickFormatter={v => `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toFixed(0)}`} />
                   <Tooltip content={<DailyTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
                   {(viewMode === 'all' || viewMode === 'income') && (
                     <Bar dataKey="income" name="Income" fill="#34d399" opacity={0.9} radius={[3, 3, 0, 0]} />
@@ -593,7 +545,7 @@ export default function DashboardClient({
                     axisLine={false} tickLine={false} interval={4} />
                   <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
                     axisLine={false} tickLine={false}
-                    tickFormatter={v => `${CURRENCY_SYMBOLS[selectedCurrency]}${v >= 1000 ? `${(convert(v) / 1000).toFixed(1)}k` : convert(v).toFixed(0)}`} />
+                    tickFormatter={v => `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toFixed(0)}`} />
                   <Tooltip content={<DailyTooltip />} />
                   {(viewMode === 'all' || viewMode === 'income') && (
                     <Line type="monotone" dataKey="income" name="Income" stroke="#34d399" strokeWidth={2.5}
