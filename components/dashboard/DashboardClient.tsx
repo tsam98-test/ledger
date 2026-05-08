@@ -172,12 +172,11 @@ export default function DashboardClient({
   ]
 
   return (
-    <div className="space-y-5 pb-24 lg:pb-8 animate-fade-in">
-
+    <div className="space-y-5 pb-24 lg:pb-8 animate-fade-in" style={{ zoom: '0.93' }}>
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl md:text-4xl font-bold text-white tracking-tight">
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">
             Dashboard
           </h1>
           <p className="text-white/50 text-sm mt-1">
@@ -218,22 +217,22 @@ export default function DashboardClient({
               <ChevronLeft size={15} />
             </button>
             <select
-              value={selectedYear}
-              onChange={e => handleYearChange(e.target.value)}
-              className="appearance-none bg-white/8 text-white text-sm font-semibold
-                border border-white/12 rounded-lg px-3 py-1.5 cursor-pointer
-                focus:outline-none focus:border-white/25 hover:border-white/20 transition-colors"
-            >
+  value={selectedYear}
+  onChange={e => handleYearChange(e.target.value)}
+  className="appearance-none bg-white/8 text-white text-sm font-semibold
+    border border-white/12 rounded-lg px-3 py-1.5 cursor-pointer
+    focus:outline-none focus:border-white/25 hover:border-white/20 transition-colors"
+  style={{ colorScheme: 'dark' }}
+>
               {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-            <select
-              value={selectedMonthNum}
-              onChange={e => handleMonthChange(e.target.value)}
-              className="appearance-none bg-white/8 text-sm font-semibold
-                border border-white/12 rounded-lg px-3 py-1.5 cursor-pointer
-                focus:outline-none focus:border-white/25 hover:border-white/20 transition-colors"
-              style={{ color: '#60d4b4' }}
-            >
+           <select
+  value={selectedMonthNum}
+  onChange={e => handleMonthChange(e.target.value)}
+  className="appearance-none bg-white/8 text-sm font-semibold
+    border border-white/12 rounded-lg px-3 py-1.5 cursor-pointer
+    focus:outline-none focus:border-white/25 hover:border-white/20 transition-colors"
+  style={{ color: '#60d4b4', colorScheme: 'dark' }}
+>
               {MONTH_NAMES.map((m, i) => (
                 <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>
               ))}
@@ -247,7 +246,6 @@ export default function DashboardClient({
 
           {/* View mode */}
           <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="text-xs font-semibold text-white/40 uppercase tracking-widest">View</span>
             <div className="flex gap-1 flex-wrap">
               {VIEW_OPTIONS.map(({ id, label, icon }) => {
                 const cfg = VIEW_CONFIG[id]
