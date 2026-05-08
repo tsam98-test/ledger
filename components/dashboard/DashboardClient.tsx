@@ -190,18 +190,17 @@ export default function DashboardClient({
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-         <h1 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">
-            Dashboard
-          </h1>
-          <p className="text-white/50 text-sm mt-1">
-             {MONTH_FULL[parseInt(selectedMonthNum) - 1]} {selectedYear}
-           </p>
-          <p className="text-white/35 text-xs mt-1.5 italic max-w-md leading-relaxed">
-            "{todayQuote.text}"
-             <span className="not-italic font-semibold text-white/25 ml-1">
-               — {todayQuote.author}
-             </span>
-          </p>
+        <p className="font-display text-xl md:text-2xl font-bold tracking-tight italic leading-snug max-w-2xl"
+  style={{ color: '#60d4b4' }}>
+  "{todayQuote.text}"
+</p>
+<p className="text-sm mt-2 font-semibold not-italic"
+  style={{ color: 'rgba(96,212,180,0.5)' }}>
+  — {todayQuote.author}
+  <span className="font-normal ml-2" style={{ color: 'rgba(96,212,180,0.3)' }}>
+    · {todayQuote.tag}
+  </span>
+</p>
         </div>
         <div className="flex items-center gap-2">
           <button
