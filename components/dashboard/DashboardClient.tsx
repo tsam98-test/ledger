@@ -111,10 +111,30 @@ export default function DashboardClient({
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [showAddIncome,  setShowAddIncome]  = useState(false)
 
+  const { time, date }  = useLiveClock()
+  const currencyRates   = useCurrencyRates()
+  const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'CAD' | 'EUR' | 'INR'>('USD')
 
-  const { time, date } = useLiveClock()
-  const currencyRates  = useCurrencyRates()
-  
+  const CURRENCY_SYMBOLS: Record<string, string> = {
+    USD: '$', CAD: 'CA$', EUR: '€', INR: '₹',
+  }
+
+  function convert(amount: number): number {
+    if (!currencyRates || selectedCurrency === 'USD') return amount
+    const rateMap: Record<string, number> = {
+      CAD: currencyRates.CAD,
+      EUR: currencyRates.EUR,
+      INR: currencyRates.INR,
+    }
+    return amount * (rateMap[selectedCurrency] ?? 1)
+  }
+
+  function fmt(amount: number): string {
+    const converted = convert(amount)
+    const symbol = CURRENCY_SYMBOLS[selectedCurrency]
+    return `${symbol}${converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
   const selectedYear     = selectedMonth.slice(0, 4)
   const selectedMonthNum = selectedMonth.slice(5, 7)
 
@@ -191,13 +211,13 @@ export default function DashboardClient({
     if (!active || !payload?.length) return null
     return (
       <div className="custom-tooltip space-y-1 min-w-[140px]">
-     <p className="text-white/60 text-xs font-medium mb-1.5">
-       {MONTH_FULL[parseInt(selectedMonthNum) - 1]} {label}
-     </p>
+        <p className="text-white/60 text-xs font-medium mb-1.5">
+          {MONTH_FULL[parseInt(selectedMonthNum) - 1]} {label}
+        </p>
         {payload.map((p: any) => (
           <div key={p.name} className="flex items-center justify-between gap-4 text-xs">
             <span style={{ color: p.fill }} className="font-medium">{p.name}</span>
-            <span className="font-mono font-semibold text-white">{formatCurrency(p.value)}</span>
+            <span className="font-mono font-semibold text-white">{fmt(p.value)}</span>
           </div>
         ))}
       </div>
@@ -217,86 +237,80 @@ export default function DashboardClient({
     { id: 'line',  label: 'Line',  icon: <TrendingUp size={13} /> },
     { id: 'donut', label: 'Donut', icon: <PieIcon size={13} />    },
   ]
-    
+
   return (
     <div className="space-y-5 pb-24 lg:pb-8 animate-fade-in">
+
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+
+        {/* Left — Quote */}
         <div>
-        <p className="font-display text-xl md:text-2xl font-bold tracking-tight italic leading-snug max-w-2xl"
-  style={{ color: '#60d4b4' }}>
-  "{todayQuote.text}"
-</p>
-<p className="text-sm mt-2 font-semibold not-italic"
-  style={{ color: 'rgba(96,212,180,0.5)' }}>
-  — {todayQuote.author}
-  <span className="font-normal ml-2" style={{ color: 'rgba(96,212,180,0.3)' }}>
-    · {todayQuote.tag}
-  </span>
-</p>
+          <p className="font-display text-xl md:text-2xl font-bold tracking-tight italic leading-snug max-w-2xl"
+            style={{ color: '#60d4b4' }}>
+            "{todayQuote.text}"
+          </p>
+          <p className="text-sm mt-2 font-semibold not-italic"
+            style={{ color: 'rgba(96,212,180,0.5)' }}>
+            — {todayQuote.author}
+            <span className="font-normal ml-2" style={{ color: 'rgba(96,212,180,0.3)' }}>
+              · {todayQuote.tag}
+            </span>
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowAddIncome(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-all
-              hover:scale-[1.03] active:scale-[0.97]"
-            style={{
-              color: '#34d399',
-              borderColor: 'rgba(52,211,153,0.35)',
-              background: 'rgba(52,211,153,0.08)',
-            }}
-          >
-            <Plus size={14} /> Income
-          </button>
-          <button
-            onClick={() => setShowAddExpense(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white
-              transition-all hover:scale-[1.03] active:scale-[0.97]"
-            style={{ background: 'linear-gradient(135deg, #00c9a7, #00a896)' }}
-          >
-            <Plus size={14} /> Expense
-          </button>
-        </div>
-      </div>
-      {/* ── Live Time + Currency Bar ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-xl"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
 
-        {/* Clock */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: 'rgba(96,212,180,0.12)', border: '1px solid rgba(96,212,180,0.2)' }}>
-            <span style={{ fontSize: 14 }}>🕐</span>
+        {/* Right — Clock + Currency + Buttons */}
+        <div className="flex flex-col items-end gap-2">
+
+          {/* Small clock top right */}
+          <p className="font-mono text-xs font-semibold"
+            style={{ color: 'rgba(96,212,180,0.6)' }}>
+            🕐 {time} · {date}
+          </p>
+
+          {/* Buttons + Currency selector */}
+          <div className="flex items-center gap-2">
+
+            {/* Currency Dropdown */}
+            <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl border"
+              style={{ background: 'rgba(251,191,36,0.08)', borderColor: 'rgba(251,191,36,0.25)' }}>
+              <span className="text-xs font-semibold" style={{ color: 'rgba(251,191,36,0.7)' }}>
+                {CURRENCY_SYMBOLS[selectedCurrency]}
+              </span>
+              <select
+                value={selectedCurrency}
+                onChange={e => setSelectedCurrency(e.target.value as 'USD' | 'CAD' | 'EUR' | 'INR')}
+                className="appearance-none bg-transparent text-xs font-bold cursor-pointer focus:outline-none"
+                style={{ color: '#fbbf24', colorScheme: 'dark' }}
+              >
+                <option value="USD">USD</option>
+                <option value="CAD">CAD</option>
+                <option value="EUR">EUR</option>
+                <option value="INR">INR</option>
+              </select>
+            </div>
+
+            <button
+              onClick={() => setShowAddIncome(true)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-all
+                hover:scale-[1.03] active:scale-[0.97]"
+              style={{
+                color: '#34d399',
+                borderColor: 'rgba(52,211,153,0.35)',
+                background: 'rgba(52,211,153,0.08)',
+              }}
+            >
+              <Plus size={14} /> Income
+            </button>
+            <button
+              onClick={() => setShowAddExpense(true)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white
+                transition-all hover:scale-[1.03] active:scale-[0.97]"
+              style={{ background: 'linear-gradient(135deg, #00c9a7, #00a896)' }}
+            >
+              <Plus size={14} /> Expense
+            </button>
           </div>
-          <div>
-            <p className="font-mono font-bold text-sm leading-none" style={{ color: '#60d4b4' }}>{time}</p>
-            <p className="text-white/40 text-xs mt-0.5">{date}</p>
-          </div>
-        </div>
-
-        <div className="h-5 w-px bg-white/10 hidden sm:block" />
-
-        {/* Currency Pairs */}
-        <div className="flex items-center gap-5 flex-wrap">
-          {currencyRates ? (
-            <>
-              {[
-                { label: 'USD/CAD', value: currencyRates.CAD, color: '#34d399' },
-                { label: 'USD/EUR', value: currencyRates.EUR, color: '#38bdf8' },
-                { label: 'USD/INR', value: currencyRates.INR, color: '#fbbf24' },
-              ].map(({ label, value, color }) => (
-                <div key={label} className="flex flex-col items-center gap-0.5">
-                  <span className="text-white/35 text-xs font-medium">{label}</span>
-                  <span className="font-mono font-bold text-sm" style={{ color }}>
-                    {value?.toFixed(2)}
-                  </span>
-                </div>
-              ))}
-            </>
-          ) : (
-            <span className="text-white/30 text-xs animate-pulse">Fetching rates...</span>
-          )}
-          <span className="text-white/15 text-xs hidden sm:inline">1 USD base</span>
         </div>
       </div>
 
@@ -310,23 +324,23 @@ export default function DashboardClient({
               <ChevronLeft size={15} />
             </button>
             <select
-  value={selectedYear}
-  onChange={e => handleYearChange(e.target.value)}
-  className="appearance-none bg-white/8 text-white text-sm font-semibold
-    border border-white/12 rounded-lg px-3 py-1.5 cursor-pointer
-    focus:outline-none focus:border-white/25 hover:border-white/20 transition-colors"
-  style={{ colorScheme: 'dark' }}
->
-             {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+              value={selectedYear}
+              onChange={e => handleYearChange(e.target.value)}
+              className="appearance-none bg-white/8 text-white text-sm font-semibold
+                border border-white/12 rounded-lg px-3 py-1.5 cursor-pointer
+                focus:outline-none focus:border-white/25 hover:border-white/20 transition-colors"
+              style={{ colorScheme: 'dark' }}
+            >
+              {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
             <select
-  value={selectedMonthNum}
-  onChange={e => handleMonthChange(e.target.value)}
-  className="appearance-none bg-white/8 text-sm font-semibold
-    border border-white/12 rounded-lg px-3 py-1.5 cursor-pointer
-    focus:outline-none focus:border-white/25 hover:border-white/20 transition-colors"
-  style={{ color: '#60d4b4', colorScheme: 'dark' }}
->
+              value={selectedMonthNum}
+              onChange={e => handleMonthChange(e.target.value)}
+              className="appearance-none bg-white/8 text-sm font-semibold
+                border border-white/12 rounded-lg px-3 py-1.5 cursor-pointer
+                focus:outline-none focus:border-white/25 hover:border-white/20 transition-colors"
+              style={{ color: '#60d4b4', colorScheme: 'dark' }}
+            >
               {MONTH_NAMES.map((m, i) => (
                 <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>
               ))}
@@ -408,7 +422,7 @@ export default function DashboardClient({
               </div>
             </div>
             <p className="text-3xl font-mono font-bold mb-1" style={{ color: '#34d399' }}>
-              {formatCurrency(totalIncome)}
+              {fmt(totalIncome)}
             </p>
             <p className="text-xs font-medium text-white/45">This month</p>
           </div>
@@ -425,7 +439,7 @@ export default function DashboardClient({
               </div>
             </div>
             <p className="text-3xl font-mono font-bold mb-1" style={{ color: '#fb7185' }}>
-              {formatCurrency(totalExpenses)}
+              {fmt(totalExpenses)}
             </p>
             <p className="text-xs font-medium text-white/45">This month</p>
           </div>
@@ -452,7 +466,7 @@ export default function DashboardClient({
               </div>
             </div>
             <p className="text-3xl font-mono font-bold mb-1" style={{ color: netSavings >= 0 ? '#38bdf8' : '#fbbf24' }}>
-              {formatCurrency(Math.abs(netSavings))}
+              {fmt(Math.abs(netSavings))}
             </p>
             <p className="text-xs font-medium text-white/45">{netSavings >= 0 ? 'Surplus' : 'Deficit'}</p>
           </div>
@@ -469,7 +483,7 @@ export default function DashboardClient({
               </div>
             </div>
             <p className="text-3xl font-mono font-bold text-white mb-1">
-              {formatCurrency(totalCurrentVal)}
+              {fmt(totalCurrentVal)}
             </p>
             <p className="text-xs font-semibold" style={{ color: returnPct >= 0 ? '#34d399' : '#fb7185' }}>
               {returnPct >= 0 ? '+' : ''}{returnPct.toFixed(1)}% return
@@ -493,9 +507,9 @@ export default function DashboardClient({
             </div>
             <span className={`text-base font-mono font-bold ${getBudgetStatusColor(totalExpenses, budgetAmt)}`}>
               {budgetRemaining >= 0
-                ? formatCurrency(budgetRemaining) + ' left'
-                : formatCurrency(Math.abs(budgetRemaining)) + ' over'}
-              <span className="text-white/35 font-normal text-xs ml-1.5">/ {formatCurrency(budgetAmt)}</span>
+                ? fmt(budgetRemaining) + ' left'
+                : fmt(Math.abs(budgetRemaining)) + ' over'}
+              <span className="text-white/35 font-normal text-xs ml-1.5">/ {fmt(budgetAmt)}</span>
             </span>
           </div>
           <div className="h-3 rounded-full bg-white/8 overflow-hidden">
@@ -544,7 +558,7 @@ export default function DashboardClient({
                     axisLine={false} tickLine={false} interval={4} />
                   <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
                     axisLine={false} tickLine={false}
-                    tickFormatter={v => `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`} />
+                    tickFormatter={v => `${CURRENCY_SYMBOLS[selectedCurrency]}${v >= 1000 ? `${(convert(v) / 1000).toFixed(1)}k` : convert(v).toFixed(0)}`} />
                   <Tooltip content={<DailyTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
                   {(viewMode === 'all' || viewMode === 'income') && (
                     <Bar dataKey="income" name="Income" fill="#34d399" opacity={0.9} radius={[3, 3, 0, 0]} />
@@ -579,7 +593,7 @@ export default function DashboardClient({
                     axisLine={false} tickLine={false} interval={4} />
                   <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
                     axisLine={false} tickLine={false}
-                    tickFormatter={v => `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`} />
+                    tickFormatter={v => `${CURRENCY_SYMBOLS[selectedCurrency]}${v >= 1000 ? `${(convert(v) / 1000).toFixed(1)}k` : convert(v).toFixed(0)}`} />
                   <Tooltip content={<DailyTooltip />} />
                   {(viewMode === 'all' || viewMode === 'income') && (
                     <Line type="monotone" dataKey="income" name="Income" stroke="#34d399" strokeWidth={2.5}
@@ -624,7 +638,7 @@ export default function DashboardClient({
                           return (
                             <div className="custom-tooltip">
                               <p className="text-xs font-semibold text-white">{payload[0].name}</p>
-                              <p className="font-mono text-sm font-bold" style={{ color: '#fb7185' }}>{formatCurrency(Number(payload[0].value))}</p>
+                              <p className="font-mono text-sm font-bold" style={{ color: '#fb7185' }}>{fmt(Number(payload[0].value))}</p>
                             </div>
                           )
                         }} />
@@ -635,7 +649,7 @@ export default function DashboardClient({
                         <div key={c.name} className="flex items-center gap-2 text-xs">
                           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: getCategoryColor(c.name) }} />
                           <span className="text-white/65 flex-1 truncate font-medium">{c.name}</span>
-                          <span className="font-mono font-bold" style={{ color: '#fb7185' }}>{formatCurrency(c.value)}</span>
+                          <span className="font-mono font-bold" style={{ color: '#fb7185' }}>{fmt(c.value)}</span>
                         </div>
                       ))}
                     </div>
@@ -661,7 +675,7 @@ export default function DashboardClient({
                           return (
                             <div className="custom-tooltip">
                               <p className="text-xs font-semibold text-white">{payload[0].name}</p>
-                              <p className="font-mono text-sm font-bold" style={{ color: '#34d399' }}>{formatCurrency(Number(payload[0].value))}</p>
+                              <p className="font-mono text-sm font-bold" style={{ color: '#34d399' }}>{fmt(Number(payload[0].value))}</p>
                             </div>
                           )
                         }} />
@@ -672,7 +686,7 @@ export default function DashboardClient({
                         <div key={c.name} className="flex items-center gap-2 text-xs">
                           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: INCOME_CATEGORY_COLORS[c.name] ?? '#94a3b8' }} />
                           <span className="text-white/65 flex-1 truncate font-medium">{c.name}</span>
-                          <span className="font-mono font-bold" style={{ color: '#34d399' }}>{formatCurrency(c.value)}</span>
+                          <span className="font-mono font-bold" style={{ color: '#34d399' }}>{fmt(c.value)}</span>
                         </div>
                       ))}
                     </div>
@@ -695,20 +709,23 @@ export default function DashboardClient({
             <PieCard title="Expenses by Category" sub={`${MONTH_FULL[parseInt(selectedMonthNum) - 1]} ${selectedYear}`}
               data={expByCategory} colorFn={getCategoryColor} empty="No expenses this month"
               onAdd={() => setShowAddExpense(true)} addLabel="+ Add Expense" amountColor="#fb7185"
-              accentColor="rgba(251,113,133,0.15)" borderColor="rgba(251,113,133,0.2)" />
+              accentColor="rgba(251,113,133,0.15)" borderColor="rgba(251,113,133,0.2)"
+              fmt={fmt} />
           )}
           {showIncome && (
             <PieCard title="Income by Source" sub={`${MONTH_FULL[parseInt(selectedMonthNum) - 1]} ${selectedYear}`}
               data={incByCategory} colorFn={n => INCOME_CATEGORY_COLORS[n] ?? '#94a3b8'} empty="No income this month"
               onAdd={() => setShowAddIncome(true)} addLabel="+ Add Income" amountColor="#34d399"
-              accentColor="rgba(52,211,153,0.15)" borderColor="rgba(52,211,153,0.2)" />
+              accentColor="rgba(52,211,153,0.15)" borderColor="rgba(52,211,153,0.2)"
+              fmt={fmt} />
           )}
           {showInvestments && (
             <PieCard title="Portfolio Breakdown" sub="All time · current value" data={invByCategory}
               colorFn={n => INVESTMENT_CATEGORY_COLORS[n] ?? '#94a3b8'} empty="No investments yet"
               onAdd={undefined} addLabel="" amountColor="#fbbf24"
               addLink="/investments" addLinkLabel="+ Add Investment"
-              accentColor="rgba(251,191,36,0.15)" borderColor="rgba(251,191,36,0.2)" />
+              accentColor="rgba(251,191,36,0.15)" borderColor="rgba(251,191,36,0.2)"
+              fmt={fmt} />
           )}
         </div>
       )}
@@ -725,16 +742,16 @@ export default function DashboardClient({
           <div className="grid grid-cols-3 gap-4 mb-4 pb-4 border-b border-white/8">
             <div>
               <p className="text-xs font-semibold text-white/45 mb-1 uppercase tracking-wider">Invested</p>
-              <p className="font-mono font-bold text-white text-lg">{formatCurrency(totalInvested)}</p>
+              <p className="font-mono font-bold text-white text-lg">{fmt(totalInvested)}</p>
             </div>
             <div>
               <p className="text-xs font-semibold text-white/45 mb-1 uppercase tracking-wider">Current</p>
-              <p className="font-mono font-bold text-white text-lg">{formatCurrency(totalCurrentVal)}</p>
+              <p className="font-mono font-bold text-white text-lg">{fmt(totalCurrentVal)}</p>
             </div>
             <div>
               <p className="text-xs font-semibold text-white/45 mb-1 uppercase tracking-wider">Return</p>
               <p className={`font-mono font-bold text-lg ${totalReturn >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {totalReturn >= 0 ? '+' : ''}{formatCurrency(totalReturn)}
+                {totalReturn >= 0 ? '+' : ''}{fmt(totalReturn)}
                 <span className="text-xs ml-1 opacity-70">({returnPct >= 0 ? '+' : ''}{returnPct.toFixed(1)}%)</span>
               </p>
             </div>
@@ -748,7 +765,7 @@ export default function DashboardClient({
                   <span className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                     style={{ background: INVESTMENT_CATEGORY_COLORS[inv.category] ?? '#94a3b8' }} />
                   <span className="text-white/70 flex-1 truncate font-medium">{inv.name}</span>
-                  <span className="font-mono text-white/50">{formatCurrency(Number(inv.current_value))}</span>
+                  <span className="font-mono text-white/50">{fmt(Number(inv.current_value))}</span>
                   <span className={`font-mono font-bold w-14 text-right ${ret >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                     {ret >= 0 ? '+' : ''}{pct.toFixed(1)}%
                   </span>
@@ -786,7 +803,7 @@ export default function DashboardClient({
                         <p className="text-xs text-white/40 font-medium">{format(parseISO(e.date), 'MMM d')}</p>
                       </div>
                       <p className="text-sm font-mono font-bold" style={{ color: '#fb7185' }}>
-                        -{formatCurrency(e.amount)}
+                        -{fmt(Number(e.amount))}
                       </p>
                     </div>
                   ))}
@@ -825,7 +842,7 @@ export default function DashboardClient({
                         </p>
                       </div>
                       <p className="text-sm font-mono font-bold" style={{ color: '#34d399' }}>
-                        +{formatCurrency(i.amount)}
+                        +{fmt(Number(i.amount))}
                       </p>
                     </div>
                   ))}
@@ -860,13 +877,14 @@ export default function DashboardClient({
 // ── PieCard ──────────────────────────────────────────────────
 function PieCard({
   title, sub, data, colorFn, empty, onAdd, addLabel, amountColor,
-  addLink, addLinkLabel, accentColor, borderColor,
+  addLink, addLinkLabel, accentColor, borderColor, fmt,
 }: {
   title: string; sub: string; data: { name: string; value: number }[]
   colorFn: (name: string) => string; empty: string
   onAdd?: () => void; addLabel: string; amountColor: string
   addLink?: string; addLinkLabel?: string
   accentColor?: string; borderColor?: string
+  fmt: (amount: number) => string
 }) {
   return (
     <div className="card p-5" style={{
@@ -888,7 +906,7 @@ function PieCard({
                   <div className="custom-tooltip">
                     <p className="text-xs font-semibold text-white">{payload[0].name}</p>
                     <p className="font-mono text-sm font-bold" style={{ color: colorFn(String(payload[0].name)) }}>
-                      {formatCurrency(Number(payload[0].value))}
+                      {fmt(Number(payload[0].value))}
                     </p>
                   </div>
                 )
@@ -900,7 +918,7 @@ function PieCard({
               <div key={c.name} className="flex items-center gap-2 text-xs">
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: colorFn(c.name) }} />
                 <span className="text-white/60 flex-1 truncate font-medium">{c.name}</span>
-                <span className="font-mono font-bold" style={{ color: amountColor }}>{formatCurrency(c.value)}</span>
+                <span className="font-mono font-bold" style={{ color: amountColor }}>{fmt(c.value)}</span>
               </div>
             ))}
           </div>
