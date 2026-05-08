@@ -172,7 +172,7 @@ export default function DashboardClient({
   ]
 
   return (
-    <div className="space-y-5 pb-24 lg:pb-8 animate-fade-in" style={{ zoom: '0.93' }}>
+    <div className="space-y-5 pb-24 lg:pb-8 animate-fade-in" style={{ zoom: '0.93' } as React.CSSProperties}>
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
