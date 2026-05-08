@@ -14,7 +14,36 @@ const QUOTES = [
 
 const todayQuote = QUOTES[new Date().getDate() % QUOTES.length]
 
-import { useState, useMemo } from 'react'
+// ── Live Clock ──
+function useLiveClock() {
+  const [time, setTime] = useState('')
+  const [date, setDate] = useState('')
+  useEffect(() => {
+    function tick() {
+      const now = new Date()
+      setTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+      setDate(now.toLocaleDateString([], { weekday: 'short', month: 'long', day: 'numeric' }))
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
+  return { time, date }
+}
+
+// ── Currency Rates ──
+function useCurrencyRates() {
+  const [rates, setRates] = useState<Record<string, number> | null>(null)
+  useEffect(() => {
+    fetch('https://api.frankfurter.app/latest?from=USD&to=CAD,EUR,INR')
+      .then(r => r.json())
+      .then(data => setRates(data.rates))
+      .catch(() => setRates(null))
+  }, [])
+  return rates
+}
+
+17: import { useState, useMemo, useEffect } from 'react'
 import { format, parseISO, getDaysInMonth } from 'date-fns'
 import {
   TrendingUp, TrendingDown, Receipt, Target, Wallet, BarChart2,
@@ -82,6 +111,10 @@ export default function DashboardClient({
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [showAddIncome,  setShowAddIncome]  = useState(false)
 
+
+  const { time, date } = useLiveClock()
+  const currencyRates  = useCurrencyRates()
+  
   const selectedYear     = selectedMonth.slice(0, 4)
   const selectedMonthNum = selectedMonth.slice(5, 7)
 
