@@ -224,8 +224,9 @@ export default function DashboardClient({
     focus:outline-none focus:border-white/25 hover:border-white/20 transition-colors"
   style={{ colorScheme: 'dark' }}
 >
-              {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
-           <select
+             {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <select
   value={selectedMonthNum}
   onChange={e => handleMonthChange(e.target.value)}
   className="appearance-none bg-white/8 text-sm font-semibold
