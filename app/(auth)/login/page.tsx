@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSignup, setIsSignup] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
   const router = useRouter()
   const supabase = createClient()
@@ -20,6 +21,7 @@ export default function LoginPage() {
   async function handleAuth(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
+    setResetSent(false)
 
     if (!email || !password) {
       setError('Please enter your email and password.')
@@ -46,7 +48,8 @@ export default function LoginPage() {
           email: normalizedEmail,
           password,
           options: {
-            emailRedirectTo: 'https://YOUR-VERCEL-APP.vercel.app',
+            emailRedirectTo:
+              'https://YOUR-VERCEL-APP.vercel.app/reset-password',
           },
         })
 
@@ -80,12 +83,43 @@ export default function LoginPage() {
     }
   }
 
+  async function handleForgotPassword() {
+    setError(null)
+    setResetSent(false)
+
+    if (!email) {
+      setError('Please enter your email first.')
+      return
+    }
+
+    try {
+      setLoading(true)
+
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.trim().toLowerCase(),
+        {
+          redirectTo: 'https://YOUR-VERCEL-APP.vercel.app/reset-password',
+        }
+      )
+
+      if (error) {
+        setError(error.message)
+        return
+      }
+
+      setResetSent(true)
+    } catch {
+      setError('Failed to send reset email.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
       style={{ background: 'var(--bg-primary)' }}
     >
-      {/* Background Effects */}
       <div
         className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full pointer-events-none"
         style={{
@@ -110,7 +144,6 @@ export default function LoginPage() {
         }}
       />
 
-      {/* Grid */}
       <div
         className="absolute inset-0 opacity-[0.025] pointer-events-none"
         style={{
@@ -123,7 +156,6 @@ export default function LoginPage() {
       />
 
       <div className="w-full max-w-sm relative animate-slide-up">
-        {/* Logo */}
         <div className="text-center mb-10">
           <div className="inline-flex mb-4">
             <Image
@@ -144,7 +176,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Card */}
         <div
           className="card p-7"
           style={{
@@ -158,7 +189,6 @@ export default function LoginPage() {
           </h2>
 
           <form onSubmit={handleAuth} className="space-y-4">
-            {/* EMAIL */}
             <div>
               <label htmlFor="email" className="label">
                 Email
@@ -184,7 +214,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* PASSWORD */}
             <div>
               <label htmlFor="password" className="label">
                 Password
@@ -221,9 +250,21 @@ export default function LoginPage() {
                   )}
                 </button>
               </div>
+
+              {!isSignup && (
+                <div className="flex justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={loading}
+                    className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors disabled:opacity-50"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* ERROR */}
             {error && (
               <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm animate-fade-in">
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-400 flex-shrink-0" />
@@ -231,7 +272,12 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* BUTTON */}
+            {resetSent && (
+              <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm animate-fade-in">
+                Password reset email sent successfully.
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -272,7 +318,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* TOGGLE */}
           <div className="mt-5 text-center text-sm">
             {isSignup ? (
               <>
@@ -285,6 +330,7 @@ export default function LoginPage() {
                   onClick={() => {
                     setIsSignup(false)
                     setError(null)
+                    setResetSent(false)
                   }}
                   className="ml-2 text-cyan-400 hover:text-cyan-300 transition-colors"
                 >
@@ -302,6 +348,7 @@ export default function LoginPage() {
                   onClick={() => {
                     setIsSignup(true)
                     setError(null)
+                    setResetSent(false)
                   }}
                   className="ml-2 text-cyan-400 hover:text-cyan-300 transition-colors"
                 >
