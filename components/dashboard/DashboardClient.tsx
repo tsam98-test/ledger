@@ -138,6 +138,34 @@ export default function DashboardClient({
   const totalReturn     = totalCurrentVal - totalInvested
   const returnPct       = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0
 
+  // ── Projected spend calculation ──
+  const projectedSpendData = useMemo(() => {
+    const now = new Date()
+    const selYear  = parseInt(selectedYear)
+    const selMonth = parseInt(selectedMonthNum) - 1 // 0-indexed
+    const daysInMonth = getDaysInMonth(new Date(selYear, selMonth, 1))
+
+    let daysElapsed: number
+    const isCurrentMonth =
+      now.getFullYear() === selYear && now.getMonth() === selMonth
+    const isPastMonth =
+      new Date(selYear, selMonth, 1) < new Date(now.getFullYear(), now.getMonth(), 1)
+
+    if (isCurrentMonth) {
+      daysElapsed = now.getDate()
+    } else if (isPastMonth) {
+      daysElapsed = daysInMonth
+    } else {
+      // future month — no projection
+      daysElapsed = 0
+    }
+
+    const projectedSpend =
+      daysElapsed > 0 ? (totalExpenses / daysElapsed) * daysInMonth : 0
+
+    return { projectedSpend, daysElapsed, daysInMonth, isCurrentMonth }
+  }, [selectedYear, selectedMonthNum, totalExpenses])
+
   const dailyData = useMemo(() => {
     const base = new Date(selectedMonth + '-01')
     const days = getDaysInMonth(base)
@@ -171,6 +199,15 @@ export default function DashboardClient({
   const budgetAmt       = budget?.amount ?? 0
   const budgetPct       = budgetAmt > 0 ? Math.min(calcPercent(totalExpenses, budgetAmt), 100) : 0
   const budgetRemaining = budgetAmt - totalExpenses
+
+  // Projected bar percentages (capped at 100 for the bar, raw for the label)
+  const projectedPct = budgetAmt > 0
+    ? Math.min((projectedSpendData.projectedSpend / budgetAmt) * 100, 100)
+    : 0
+  const projectedOverBudget = projectedSpendData.projectedSpend > budgetAmt
+  // The dashed extension starts at current spend % and goes to projected %
+  const dashedStart  = budgetPct
+  const dashedWidth  = Math.max(projectedPct - budgetPct, 0)
 
   const showIncome      = viewMode === 'all' || viewMode === 'income'
   const showExpenses    = viewMode === 'all' || viewMode === 'expenses' || viewMode === 'budget'
@@ -212,57 +249,54 @@ export default function DashboardClient({
   return (
     <div className="space-y-5 pb-24 lg:pb-8 animate-fade-in">
 
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+      {/* ── Header — quote + clock on one compact line ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
 
-        {/* Left — Quote */}
-        <div>
-          <p className="font-display text-xl md:text-2xl font-bold tracking-tight italic leading-snug max-w-2xl"
-            style={{ color: '#60d4b4' }}>
+        {/* Left — Quote compressed to single line */}
+        <div className="flex items-center gap-2 min-w-0">
+          <p
+            className="text-sm font-semibold italic truncate"
+            style={{ color: '#60d4b4' }}
+          >
             "{todayQuote.text}"
           </p>
-          <p className="text-sm mt-2 font-semibold not-italic"
-            style={{ color: 'rgba(96,212,180,0.5)' }}>
+          <span
+            className="text-xs font-medium whitespace-nowrap flex-shrink-0"
+            style={{ color: 'rgba(96,212,180,0.45)' }}
+          >
             — {todayQuote.author}
-            <span className="font-normal ml-2" style={{ color: 'rgba(96,212,180,0.3)' }}>
-              · {todayQuote.tag}
-            </span>
-          </p>
+          </span>
         </div>
 
-        {/* Right — Clock + Currency + Buttons */}
-        <div className="flex flex-col items-end gap-2">
-
-          {/* Small clock top right */}
-          <p className="font-mono text-xs font-semibold"
+        {/* Right — Clock + Buttons */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Clock */}
+          <p className="font-mono text-xs font-semibold hidden md:block"
             style={{ color: 'rgba(96,212,180,0.6)' }}>
             🕐 {time} · {date}
           </p>
 
           {/* Buttons */}
-          <div className="flex items-center gap-2">
-
-            <button
-              onClick={() => setShowAddIncome(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-all
-                hover:scale-[1.03] active:scale-[0.97]"
-              style={{
-                color: '#34d399',
-                borderColor: 'rgba(52,211,153,0.35)',
-                background: 'rgba(52,211,153,0.08)',
-              }}
-            >
-              <Plus size={14} /> Income
-            </button>
-            <button
-              onClick={() => setShowAddExpense(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white
-                transition-all hover:scale-[1.03] active:scale-[0.97]"
-              style={{ background: 'linear-gradient(135deg, #00c9a7, #00a896)' }}
-            >
-              <Plus size={14} /> Expense
-            </button>
-          </div>
+          <button
+            onClick={() => setShowAddIncome(true)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-all
+              hover:scale-[1.03] active:scale-[0.97]"
+            style={{
+              color: '#34d399',
+              borderColor: 'rgba(52,211,153,0.35)',
+              background: 'rgba(52,211,153,0.08)',
+            }}
+          >
+            <Plus size={14} /> Income
+          </button>
+          <button
+            onClick={() => setShowAddExpense(true)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white
+              transition-all hover:scale-[1.03] active:scale-[0.97]"
+            style={{ background: 'linear-gradient(135deg, #00c9a7, #00a896)' }}
+          >
+            <Plus size={14} /> Expense
+          </button>
         </div>
       </div>
 
@@ -464,19 +498,52 @@ export default function DashboardClient({
               <span className="text-white/35 font-normal text-xs ml-1.5">/ {fmt(budgetAmt)}</span>
             </span>
           </div>
-          <div className="h-3 rounded-full bg-white/8 overflow-hidden">
+
+          {/* Bar track — position:relative to anchor the projected overlay */}
+          <div className="h-3 rounded-full bg-white/8 overflow-hidden relative">
+            {/* Solid spend bar */}
             <div
               className={`h-full rounded-full transition-all duration-700 ${getBudgetBarColor(totalExpenses, budgetAmt)}`}
               style={{ width: `${budgetPct}%` }}
             />
+            {/* Dashed projected-overage extension — only shown when projection > current spend */}
+            {projectedSpendData.isCurrentMonth && dashedWidth > 0 && (
+              <div
+                className="absolute top-0 h-full rounded-r-full"
+                style={{
+                  left: `${dashedStart}%`,
+                  width: `${dashedWidth}%`,
+                  background: 'rgba(251,113,133,0.18)',
+                  borderLeft: '2px dashed #fb7185',
+                  // Make the right edge slightly rounded via inline style since overflow:hidden clips it
+                }}
+              />
+            )}
           </div>
+
           <div className="flex justify-between mt-2 text-xs font-medium">
             <span className="text-white/40">{budgetPct}% used</span>
-            {budgetPct >= 80 && (
-              <span className={budgetPct >= 100 ? 'text-rose-400' : 'text-orange-400'}>
-                {budgetPct >= 100 ? '⚠️ Over budget' : '⚡ Nearing limit'}
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {/* Projected spend label — shown for current month with projection data */}
+              {projectedSpendData.isCurrentMonth && projectedSpendData.projectedSpend > 0 && (
+                <span
+                  className="flex items-center gap-1"
+                  style={{ color: projectedOverBudget ? '#fb7185' : 'rgba(255,255,255,0.35)' }}
+                >
+                  <span
+                    className="inline-block w-3 border-t border-dashed"
+                    style={{ borderColor: projectedOverBudget ? '#fb7185' : 'rgba(255,255,255,0.3)' }}
+                  />
+                  Projected {fmt(projectedSpendData.projectedSpend)}
+                  {projectedOverBudget && ' ⚠️'}
+                </span>
+              )}
+              {budgetPct >= 80 && (
+                <span className={budgetPct >= 100 ? 'text-rose-400' : 'text-orange-400'}>
+                  {budgetPct >= 100 ? '⚠️ Over budget' : '⚡ Nearing limit'}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}
