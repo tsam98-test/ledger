@@ -182,6 +182,14 @@ export default function DashboardClient({
     return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }))
   }, [monthIncome])
 
+  const expByPaymentMethod = useMemo(() => {
+    const map: Record<string, number> = {}
+    monthExpenses.forEach(e => { map[e.payment_method] = (map[e.payment_method] ?? 0) + Number(e.amount) })
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }))
+  }, [monthExpenses])
+
+  const savingsRate = totalIncome > 0 ? Math.max(0, Math.min(100, (netSavings / totalIncome) * 100)) : 0
+
   const invByCategory = useMemo(() => {
     const map: Record<string, number> = {}
     investments.forEach(i => { map[i.category] = (map[i.category] ?? 0) + Number(i.current_value) })
@@ -670,19 +678,26 @@ export default function DashboardClient({
       {/* ── Category Breakdowns ── */}
       {(showExpenses || showIncome || showInvestments) && (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {showExpenses && (
-            <PieCard title="Expenses by Category" sub={`${MONTH_FULL[parseInt(selectedMonthNum) - 1]} ${selectedYear}`}
-              data={expByCategory} colorFn={getCategoryColor} empty="No expenses this month"
-              onAdd={() => setShowAddExpense(true)} addLabel="+ Add Expense" amountColor="#fb7185"
-              accentColor="rgba(251,113,133,0.15)" borderColor="rgba(251,113,133,0.2)"
-              fmt={fmt} />
+          {(showIncome || showExpenses) && (
+            <SavingsGaugeCard
+              totalIncome={totalIncome}
+              totalExpenses={totalExpenses}
+              netSavings={netSavings}
+              savingsRate={savingsRate}
+              fmt={fmt}
+              selectedMonthName={`${MONTH_FULL[parseInt(selectedMonthNum) - 1]} ${selectedYear}`}
+              onAddIncome={() => setShowAddIncome(true)}
+              onAddExpense={() => setShowAddExpense(true)}
+            />
           )}
-          {showIncome && (
-            <PieCard title="Income by Source" sub={`${MONTH_FULL[parseInt(selectedMonthNum) - 1]} ${selectedYear}`}
-              data={incByCategory} colorFn={n => INCOME_CATEGORY_COLORS[n] ?? '#94a3b8'} empty="No income this month"
-              onAdd={() => setShowAddIncome(true)} addLabel="+ Add Income" amountColor="#34d399"
-              accentColor="rgba(52,211,153,0.15)" borderColor="rgba(52,211,153,0.2)"
-              fmt={fmt} />
+          {showExpenses && (
+            <PaymentMethodCard
+              data={expByPaymentMethod}
+              totalExpenses={totalExpenses}
+              fmt={fmt}
+              selectedMonthName={`${MONTH_FULL[parseInt(selectedMonthNum) - 1]} ${selectedYear}`}
+              onAdd={() => setShowAddExpense(true)}
+            />
           )}
           {showInvestments && (
             <PieCard title="Portfolio Breakdown" sub="All time · current value" data={invByCategory}
@@ -835,6 +850,235 @@ export default function DashboardClient({
         <AddIncomeModal userId={userId} onClose={() => setShowAddIncome(false)}
           onSaved={i => { setIncome(p => [i, ...p]); setShowAddIncome(false) }}
           knownSources={knownSources} />
+      )}
+    </div>
+  )
+}
+
+// ── SavingsGaugeCard ─────────────────────────────────────────
+const GAUGE_R          = 72
+const GAUGE_CX         = 90
+const GAUGE_CY         = 95
+const GAUGE_CIRCUMFERENCE = Math.PI * GAUGE_R   // semicircle = π × r
+
+function gaugeNeedle(rate: number) {
+  const angle = Math.PI * (1 - rate / 100)
+  return { x: GAUGE_CX + GAUGE_R * Math.cos(angle), y: GAUGE_CY - GAUGE_R * Math.sin(angle) }
+}
+
+function gaugeColor(rate: number): string {
+  if (rate < 10)  return '#ef4444'
+  if (rate < 20)  return '#f59e0b'
+  if (rate < 35)  return '#34d399'
+  return '#60d4b4'
+}
+
+function SavingsGaugeCard({
+  totalIncome, totalExpenses, netSavings, savingsRate, fmt, selectedMonthName, onAddIncome, onAddExpense,
+}: {
+  totalIncome: number; totalExpenses: number; netSavings: number; savingsRate: number
+  fmt: (n: number) => string; selectedMonthName: string
+  onAddIncome: () => void; onAddExpense: () => void
+}) {
+  const dashoffset = GAUGE_CIRCUMFERENCE * (1 - savingsRate / 100)
+  const needle     = gaugeNeedle(savingsRate)
+  const color      = gaugeColor(savingsRate)
+  const hasData    = totalIncome > 0 || totalExpenses > 0
+
+  const status = savingsRate < 10
+    ? { text: 'Critical — save more urgently', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.28)' }
+    : savingsRate < 20
+    ? { text: 'Below target · aim for 20%+',  color: '#fbbf24', bg: 'rgba(251,191,36,0.12)', border: 'rgba(251,191,36,0.28)' }
+    : savingsRate < 35
+    ? { text: 'On track — solid savings pace', color: '#34d399', bg: 'rgba(52,211,153,0.12)', border: 'rgba(52,211,153,0.28)' }
+    : { text: 'Excellent — top tier saver!',   color: '#60d4b4', bg: 'rgba(96,212,180,0.12)', border: 'rgba(96,212,180,0.28)' }
+
+  return (
+    <div className="card p-5" style={{
+      borderColor: 'rgba(96,212,180,0.2)',
+      background: 'linear-gradient(135deg, rgba(96,212,180,0.04) 0%, transparent 60%)',
+    }}>
+      <h2 className="text-sm font-bold text-white mb-0.5">Savings Rate</h2>
+      <p className="text-xs font-medium text-white/40 mb-3">{selectedMonthName} · income kept vs spent</p>
+
+      {hasData ? (
+        <>
+          {/* ── Gauge arc ── */}
+          <div className="flex justify-center">
+            <svg viewBox="0 0 180 110" width="100%" style={{ maxWidth: 200, overflow: 'visible' }}>
+              <defs>
+                <linearGradient id="sgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%"   stopColor="#ef4444" />
+                  <stop offset="25%"  stopColor="#f59e0b" />
+                  <stop offset="60%"  stopColor="#34d399" />
+                  <stop offset="100%" stopColor="#60d4b4" />
+                </linearGradient>
+              </defs>
+              {/* Track */}
+              <path d="M 18 95 A 72 72 0 0 1 162 95" fill="none"
+                stroke="rgba(255,255,255,0.07)" strokeWidth="12" strokeLinecap="round" />
+              {/* Filled arc */}
+              <path d="M 18 95 A 72 72 0 0 1 162 95" fill="none"
+                stroke="url(#sgGrad)" strokeWidth="12" strokeLinecap="round"
+                strokeDasharray={GAUGE_CIRCUMFERENCE}
+                strokeDashoffset={dashoffset} />
+              {/* Needle dot */}
+              <circle cx={needle.x} cy={needle.y} r="6"
+                fill={color} stroke="rgba(0,0,0,0.45)" strokeWidth="2" />
+              {/* Scale labels */}
+              <text x="11"  y="108" fontSize="8" fill="rgba(255,255,255,0.25)" fontWeight="700" textAnchor="middle">0%</text>
+              <text x="90"  y="20"  fontSize="8" fill="rgba(255,255,255,0.25)" fontWeight="700" textAnchor="middle">50%</text>
+              <text x="169" y="108" fontSize="8" fill="rgba(255,255,255,0.25)" fontWeight="700" textAnchor="middle">100%</text>
+              {/* Center value */}
+              <text x="90" y="80" textAnchor="middle" dominantBaseline="middle"
+                fontSize="28" fontWeight="800" fill={color}
+                fontFamily="'SF Mono','Fira Code',monospace">
+                {savingsRate.toFixed(1)}%
+              </text>
+              <text x="90" y="97" textAnchor="middle"
+                fontSize="9" fill="rgba(255,255,255,0.35)" fontWeight="600" letterSpacing="0.04em">
+                of income saved
+              </text>
+            </svg>
+          </div>
+
+          {/* Status badge */}
+          <div className="flex justify-center mt-1 mb-3">
+            <span className="text-xs font-bold px-3 py-1 rounded-full"
+              style={{ color: status.color, background: status.bg, border: `1px solid ${status.border}` }}>
+              {status.text}
+            </span>
+          </div>
+
+          {/* Color legend */}
+          <div className="flex justify-center gap-3 mb-3">
+            {([
+              { label: '0–10',  color: '#ef4444' },
+              { label: '10–20', color: '#f59e0b' },
+              { label: '20–35', color: '#34d399' },
+              { label: '35%+',  color: '#60d4b4' },
+            ] as const).map(b => (
+              <div key={b.label} className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: b.color }} />
+                <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.35)' }}>{b.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/8">
+            <div className="text-center">
+              <p className="text-xs font-semibold text-white/40 mb-0.5 uppercase tracking-wider">Income</p>
+              <p className="text-xs font-mono font-bold" style={{ color: '#34d399' }}>+{fmt(totalIncome)}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs font-semibold text-white/40 mb-0.5 uppercase tracking-wider">Spent</p>
+              <p className="text-xs font-mono font-bold" style={{ color: '#fb7185' }}>-{fmt(totalExpenses)}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs font-semibold text-white/40 mb-0.5 uppercase tracking-wider">Saved</p>
+              <p className="text-xs font-mono font-bold"
+                style={{ color: netSavings >= 0 ? '#38bdf8' : '#fbbf24' }}>
+                {netSavings >= 0 ? '+' : '-'}{fmt(Math.abs(netSavings))}
+              </p>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="h-40 flex flex-col items-center justify-center gap-3">
+          <p className="text-white/35 text-sm">No data this month</p>
+          <div className="flex gap-2">
+            <button onClick={onAddIncome}
+              className="text-xs font-semibold py-1.5 px-3 rounded-xl text-white"
+              style={{ background: '#10b981' }}>+ Income</button>
+            <button onClick={onAddExpense}
+              className="text-xs font-semibold py-1.5 px-3 rounded-xl text-white"
+              style={{ background: 'linear-gradient(135deg, #fb7185, #e11d48)' }}>+ Expense</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── PaymentMethodCard ─────────────────────────────────────────
+const PM_ICONS: Record<string, string> = {
+  'Cash':           '💵',
+  'Credit Card':    '💳',
+  'Debit Card':     '🏧',
+  'Bank Transfer':  '🏦',
+  'Digital Wallet': '📱',
+  'Other':          '💰',
+}
+
+const PM_COLORS: Record<string, { bar: string; bg: string }> = {
+  'Credit Card':    { bar: 'linear-gradient(90deg,#6366f1,#818cf8)', bg: 'rgba(99,102,241,0.18)'  },
+  'Debit Card':     { bar: 'linear-gradient(90deg,#3b82f6,#60a5fa)', bg: 'rgba(59,130,246,0.18)'  },
+  'Bank Transfer':  { bar: 'linear-gradient(90deg,#fb7185,#f43f5e)', bg: 'rgba(251,113,133,0.18)' },
+  'Cash':           { bar: 'linear-gradient(90deg,#f59e0b,#fbbf24)', bg: 'rgba(245,158,11,0.18)'  },
+  'Digital Wallet': { bar: 'linear-gradient(90deg,#34d399,#10b981)', bg: 'rgba(52,211,153,0.18)'  },
+  'Other':          { bar: 'linear-gradient(90deg,#94a3b8,#cbd5e1)', bg: 'rgba(148,163,184,0.18)' },
+}
+
+function PaymentMethodCard({
+  data, totalExpenses, fmt, selectedMonthName, onAdd,
+}: {
+  data: { name: string; value: number }[]
+  totalExpenses: number; fmt: (n: number) => string
+  selectedMonthName: string; onAdd: () => void
+}) {
+  return (
+    <div className="card p-5" style={{
+      borderColor: 'rgba(251,113,133,0.2)',
+      background: 'linear-gradient(135deg, rgba(251,113,133,0.04) 0%, transparent 60%)',
+    }}>
+      <h2 className="text-sm font-bold text-white mb-0.5">Spending by Method</h2>
+      <p className="text-xs font-medium text-white/40 mb-4">{selectedMonthName} · how you paid</p>
+
+      {data.length > 0 ? (
+        <div className="space-y-3">
+          {data.map(item => {
+            const pct    = totalExpenses > 0 ? (item.value / totalExpenses) * 100 : 0
+            const colors = PM_COLORS[item.name] ?? PM_COLORS['Other']
+            const icon   = PM_ICONS[item.name]  ?? '💰'
+            return (
+              <div key={item.name}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+                      style={{ background: colors.bg }}>
+                      {icon}
+                    </div>
+                    <span className="text-xs font-bold text-white/80">{item.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs font-semibold text-white/30">{pct.toFixed(1)}%</span>
+                    <span className="text-xs font-mono font-bold" style={{ color: '#fb7185' }}>
+                      {fmt(item.value)}
+                    </span>
+                  </div>
+                </div>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                  <div className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${pct}%`, background: colors.bar }} />
+                </div>
+              </div>
+            )
+          })}
+          <div className="flex items-center justify-between pt-3 border-t border-white/8">
+            <span className="text-xs font-bold text-white/40 uppercase tracking-wider">Total</span>
+            <span className="text-sm font-mono font-bold" style={{ color: '#fb7185' }}>{fmt(totalExpenses)}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="h-40 flex flex-col items-center justify-center gap-3">
+          <p className="text-sm text-white/35">No expenses this month</p>
+          <button onClick={onAdd}
+            className="text-xs font-semibold py-1.5 px-3 rounded-xl text-white"
+            style={{ background: 'linear-gradient(135deg, #fb7185, #e11d48)' }}>
+            + Add Expense
+          </button>
+        </div>
       )}
     </div>
   )
