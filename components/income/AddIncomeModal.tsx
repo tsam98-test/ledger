@@ -8,13 +8,21 @@ import { validateAmount, cn } from '@/lib/utils'
 import { Modal } from '@/components/expenses/AddExpenseModal'
 import { format } from 'date-fns'
 
+// A known source with its most-recently-used category
+export interface KnownSource {
+  source: string
+  category: string
+}
+
 interface Props {
   userId: string
   onClose: () => void
   onSaved: (income: Income) => void
+  /** Deduplicated list of prior income sources — shown as quick-select chips */
+  knownSources?: KnownSource[]
 }
 
-export default function AddIncomeModal({ userId, onClose, onSaved }: Props) {
+export default function AddIncomeModal({ userId, onClose, onSaved, knownSources = [] }: Props) {
   const [form, setForm] = useState({
     amount: '',
     source: '',
@@ -23,10 +31,18 @@ export default function AddIncomeModal({ userId, onClose, onSaved }: Props) {
     notes: '',
     is_recurring: false,
   })
+  const [activeChip, setActiveChip] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const supabase = createClient()
+
+  /** Tap a known source chip → fills source + category, clears those errors */
+  function selectKnownSource(ks: KnownSource) {
+    setActiveChip(ks.source)
+    setForm(f => ({ ...f, source: ks.source, category: ks.category }))
+    setErrors(e => ({ ...e, source: '', category: '' }))
+  }
 
   function validate(): boolean {
     const e: Record<string, string> = {}
@@ -69,6 +85,47 @@ export default function AddIncomeModal({ userId, onClose, onSaved }: Props) {
   return (
     <Modal title="Add Income" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
+
+        {/* ── Quick-select: known sources ── */}
+        {knownSources.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
+              Quick Select Source
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {knownSources.map((ks) => {
+                const isActive = activeChip === ks.source
+                return (
+                  <button
+                    key={ks.source}
+                    type="button"
+                    onClick={() => selectKnownSource(ks)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all"
+                    style={isActive ? {
+                      background: 'rgba(16,185,129,0.15)',
+                      borderColor: 'rgba(16,185,129,0.5)',
+                      color: '#10b981',
+                    } : {
+                      background: 'rgba(255,255,255,0.04)',
+                      borderColor: 'rgba(255,255,255,0.12)',
+                      color: 'rgba(255,255,255,0.65)',
+                    }}
+                  >
+                    {/* green checkmark when selected */}
+                    {isActive && (
+                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                    {ks.source}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="mt-3 border-t border-white/8" />
+          </div>
+        )}
+
         <div>
           <label className="label">Amount</label>
           <div className="relative">
@@ -84,11 +141,17 @@ export default function AddIncomeModal({ userId, onClose, onSaved }: Props) {
 
         <div>
           <label className="label">Source</label>
-          <input type="text" placeholder="e.g. Acme Corp, Freelance Project…"
+          <input
+            type="text"
+            placeholder="e.g. Jack Astor's Pay, McDonald's Pay…"
             value={form.source}
-            onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))}
+            onChange={(e) => {
+              setActiveChip(null) // deselect chip if user types manually
+              setForm((f) => ({ ...f, source: e.target.value }))
+            }}
             className={cn('input', errors.source && 'border-rose-500/50')}
-            maxLength={100} />
+            maxLength={100}
+          />
           {errors.source && <p className="text-rose-400 text-xs mt-1">{errors.source}</p>}
         </div>
 
