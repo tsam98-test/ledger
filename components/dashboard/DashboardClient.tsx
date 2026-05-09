@@ -19,7 +19,7 @@ import {
 } from '@/lib/utils'
 import Link from 'next/link'
 import AddExpenseModal from '@/components/expenses/AddExpenseModal'
-import AddIncomeModal from '@/components/income/AddIncomeModal'
+import AddIncomeModal, { type KnownSource } from '@/components/income/AddIncomeModal'
 
 // ── Daily motivational quote ──
 const QUOTES = [
@@ -191,6 +191,16 @@ export default function DashboardClient({
   const budgetAmt       = budget?.amount ?? 0
   const budgetPct       = budgetAmt > 0 ? Math.min(calcPercent(totalExpenses, budgetAmt), 100) : 0
   const budgetRemaining = budgetAmt - totalExpenses
+
+  // Deduplicated known income sources for quick-select chips in AddIncomeModal
+  const knownSources = useMemo<KnownSource[]>(() => {
+    const map = new Map<string, string>()
+    // income is sorted date desc — first occurrence per source = most recent category
+    ;[...income].forEach(i => {
+      if (!map.has(i.source)) map.set(i.source, i.category)
+    })
+    return Array.from(map.entries()).map(([source, category]) => ({ source, category }))
+  }, [income])
 
   // Projected bar percentages (capped at 100 for the bar, raw for the label)
   const projectedPct = budgetAmt > 0
@@ -823,7 +833,8 @@ export default function DashboardClient({
       )}
       {showAddIncome && (
         <AddIncomeModal userId={userId} onClose={() => setShowAddIncome(false)}
-          onSaved={i => { setIncome(p => [i, ...p]); setShowAddIncome(false) }} />
+          onSaved={i => { setIncome(p => [i, ...p]); setShowAddIncome(false) }}
+          knownSources={knownSources} />
       )}
     </div>
   )
