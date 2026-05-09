@@ -5,12 +5,11 @@ import { format, parseISO, getDaysInMonth } from 'date-fns'
 import {
   TrendingUp, TrendingDown, Receipt, Target, Wallet, BarChart2,
   ArrowUpRight, ArrowDownRight, X, Plus, ChevronLeft, ChevronRight,
-  LayoutDashboard, PieChart as PieIcon, BarChart,
+  LayoutDashboard,
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart as ReBarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell,
-  LineChart, Line,
 } from 'recharts'
 import type { Expense, Income, Investment, Budget } from '@/types'
 import { INVESTMENT_CATEGORY_COLORS, INCOME_CATEGORY_COLORS } from '@/types'
@@ -55,7 +54,6 @@ function useLiveClock() {
 
 
 type ViewMode  = 'all' | 'income' | 'expenses' | 'investments' | 'budget'
-type ChartType = 'daily' | 'line' | 'donut'
 
 interface Props {
   expenses: Expense[]
@@ -95,7 +93,6 @@ export default function DashboardClient({
   const [expenses, setExpenses] = useState(initExp)
   const [income, setIncome]     = useState(initInc)
   const [viewMode, setViewMode] = useState<ViewMode>('all')
-  const [chartType, setChartType] = useState<ChartType>('daily')
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [showAddIncome,  setShowAddIncome]  = useState(false)
@@ -166,17 +163,12 @@ export default function DashboardClient({
     return { projectedSpend, daysElapsed, daysInMonth, isCurrentMonth }
   }, [selectedYear, selectedMonthNum, totalExpenses])
 
-  const dailyData = useMemo(() => {
-    const base = new Date(selectedMonth + '-01')
-    const days = getDaysInMonth(base)
-    return Array.from({ length: days }, (_, i) => {
-      const dayStr  = String(i + 1).padStart(2, '0')
-      const dateStr = `${selectedMonth}-${dayStr}`
-      const exp = monthExpenses.filter(e => e.date.startsWith(dateStr)).reduce((s, e) => s + Number(e.amount), 0)
-      const inc = monthIncome.filter(i => i.date.startsWith(dateStr)).reduce((s, i) => s + Number(i.amount), 0)
-      return { day: i + 1, label: String(i + 1), expenses: exp, income: inc }
-    })
-  }, [monthExpenses, monthIncome, selectedMonth])
+  // Income grouped by source name (e.g. "Jack Astor", "McDonald's")
+  const incBySource = useMemo(() => {
+    const map: Record<string, number> = {}
+    monthIncome.forEach(i => { map[i.source] = (map[i.source] ?? 0) + Number(i.amount) })
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }))
+  }, [monthIncome])
 
   const expByCategory = useMemo(() => {
     const map: Record<string, number> = {}
@@ -213,24 +205,6 @@ export default function DashboardClient({
   const showExpenses    = viewMode === 'all' || viewMode === 'expenses' || viewMode === 'budget'
   const showInvestments = viewMode === 'all' || viewMode === 'investments'
   const showBudget      = viewMode === 'all' || viewMode === 'budget'
-  const showTrend       = viewMode === 'all' || viewMode === 'income' || viewMode === 'expenses'
-
-  const DailyTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload?.length) return null
-    return (
-      <div className="custom-tooltip space-y-1 min-w-[140px]">
-        <p className="text-white/60 text-xs font-medium mb-1.5">
-          {MONTH_FULL[parseInt(selectedMonthNum) - 1]} {label}
-        </p>
-        {payload.map((p: any) => (
-          <div key={p.name} className="flex items-center justify-between gap-4 text-xs">
-            <span style={{ color: p.fill }} className="font-medium">{p.name}</span>
-            <span className="font-mono font-semibold text-white">{fmt(p.value)}</span>
-          </div>
-        ))}
-      </div>
-    )
-  }
 
   const VIEW_OPTIONS: { id: ViewMode; label: string; icon: React.ReactNode }[] = [
     { id: 'all',         label: 'Overview',    icon: <LayoutDashboard size={13} /> },
@@ -238,12 +212,6 @@ export default function DashboardClient({
     { id: 'expenses',    label: 'Expenses',    icon: <Receipt size={13} />         },
     { id: 'investments', label: 'Investments', icon: <BarChart2 size={13} />       },
     { id: 'budget',      label: 'Budget',      icon: <Target size={13} />          },
-  ]
-
-  const CHART_OPTIONS: { id: ChartType; label: string; icon: React.ReactNode }[] = [
-    { id: 'daily', label: 'Daily', icon: <BarChart size={13} />   },
-    { id: 'line',  label: 'Line',  icon: <TrendingUp size={13} /> },
-    { id: 'donut', label: 'Donut', icon: <PieIcon size={13} />    },
   ]
 
   return (
@@ -360,28 +328,6 @@ export default function DashboardClient({
               })}
             </div>
           </div>
-
-          {/* Chart type */}
-          {showTrend && (
-            <>
-              <div className="hidden sm:block h-5 w-px bg-white/10" />
-              <div className="flex gap-1">
-                {CHART_OPTIONS.map(({ id, label, icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => setChartType(id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all"
-                    style={chartType === id
-                      ? { color: '#fbbf24', background: 'rgba(251,191,36,0.12)', borderColor: 'rgba(251,191,36,0.3)' }
-                      : { color: 'rgba(255,255,255,0.55)', background: 'transparent', borderColor: 'transparent' }
-                    }
-                  >
-                    {icon}{label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
 
           {viewMode !== 'all' && (
             <button
@@ -533,167 +479,181 @@ export default function DashboardClient({
         </div>
       )}
 
-      {/* ── Monthly Chart ── */}
-      {showTrend && (
-        <div className="card p-5">
-          <div className="mb-5">
-            <h2 className="text-base font-bold text-white">Monthly Breakdown</h2>
-            <p className="text-xs font-medium text-white/40 mt-0.5">
-              {MONTH_FULL[parseInt(selectedMonthNum) - 1]} {selectedYear} · daily view
-            </p>
-          </div>
+      {/* ── Monthly Breakdown — dual charts ── */}
+      {(showIncome || showExpenses) && (
+        <div className="grid md:grid-cols-2 gap-4">
 
-          {/* DAILY BAR CHART */}
-          {chartType === 'daily' && (
-            <>
-              <ResponsiveContainer width="100%" height={220}>
-                <ReBarChart data={dailyData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }} barGap={1}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 500 }}
-                    axisLine={false} tickLine={false} interval={4} />
-                  <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                    axisLine={false} tickLine={false}
-                    tickFormatter={v => `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toFixed(0)}`} />
-                  <Tooltip content={<DailyTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-                  {(viewMode === 'all' || viewMode === 'income') && (
-                    <Bar dataKey="income" name="Income" fill="#34d399" opacity={0.9} radius={[3, 3, 0, 0]} />
-                  )}
-                  {(viewMode === 'all' || viewMode === 'expenses') && (
-                    <Bar dataKey="expenses" name="Expenses" fill="#fb7185" opacity={0.9} radius={[3, 3, 0, 0]} />
-                  )}
-                </ReBarChart>
-              </ResponsiveContainer>
-              <div className="flex gap-5 mt-3">
-                {(viewMode === 'all' || viewMode === 'income') && (
-                  <span className="flex items-center gap-2 text-xs font-semibold text-white/60">
-                    <span className="w-3 h-2 rounded-sm inline-block" style={{ background: '#34d399' }} />Income
-                  </span>
-                )}
-                {(viewMode === 'all' || viewMode === 'expenses') && (
-                  <span className="flex items-center gap-2 text-xs font-semibold text-white/60">
-                    <span className="w-3 h-2 rounded-sm inline-block" style={{ background: '#fb7185' }} />Expenses
-                  </span>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* LINE CHART */}
-          {chartType === 'line' && (
-            <>
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={dailyData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                    axisLine={false} tickLine={false} interval={4} />
-                  <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                    axisLine={false} tickLine={false}
-                    tickFormatter={v => `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toFixed(0)}`} />
-                  <Tooltip content={<DailyTooltip />} />
-                  {(viewMode === 'all' || viewMode === 'income') && (
-                    <Line type="monotone" dataKey="income" name="Income" stroke="#34d399" strokeWidth={2.5}
-                      dot={{ fill: '#34d399', r: 2.5, strokeWidth: 0 }} activeDot={{ r: 5 }} />
-                  )}
-                  {(viewMode === 'all' || viewMode === 'expenses') && (
-                    <Line type="monotone" dataKey="expenses" name="Expenses" stroke="#fb7185" strokeWidth={2.5}
-                      dot={{ fill: '#fb7185', r: 2.5, strokeWidth: 0 }} activeDot={{ r: 5 }} />
-                  )}
-                </LineChart>
-              </ResponsiveContainer>
-              <div className="flex gap-5 mt-3">
-                {(viewMode === 'all' || viewMode === 'income') && (
-                  <span className="flex items-center gap-2 text-xs font-semibold text-white/60">
-                    <span className="w-3 h-2 rounded-sm inline-block" style={{ background: '#34d399' }} />Income
-                  </span>
-                )}
-                {(viewMode === 'all' || viewMode === 'expenses') && (
-                  <span className="flex items-center gap-2 text-xs font-semibold text-white/60">
-                    <span className="w-3 h-2 rounded-sm inline-block" style={{ background: '#fb7185' }} />Expenses
-                  </span>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* DONUT CHART */}
-          {chartType === 'donut' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <p className="text-sm font-bold text-white/70 mb-3 text-center">Expenses by Category</p>
-                {expByCategory.length > 0 ? (
-                  <>
-                    <ResponsiveContainer width="100%" height={160}>
-                      <PieChart>
-                        <Pie data={expByCategory} cx="50%" cy="50%"
-                          innerRadius={45} outerRadius={70} paddingAngle={2} dataKey="value">
-                          {expByCategory.map(e => <Cell key={e.name} fill={getCategoryColor(e.name)} opacity={0.9} />)}
-                        </Pie>
-                        <Tooltip content={({ active, payload }) => {
+          {/* ── Income by Source — horizontal bars ── */}
+          {showIncome && (
+            <div className="card p-5" style={{ borderColor: 'rgba(52,211,153,0.15)', background: 'linear-gradient(135deg, rgba(52,211,153,0.04) 0%, transparent 60%)' }}>
+              <h2 className="text-sm font-bold text-white mb-0.5">Income by Source</h2>
+              <p className="text-xs font-medium text-white/40 mb-4">
+                {MONTH_FULL[parseInt(selectedMonthNum) - 1]} {selectedYear} · all shifts combined
+              </p>
+              {incBySource.length > 0 ? (
+                <>
+                  <ResponsiveContainer width="100%" height={Math.max(incBySource.length * 52, 80)}>
+                    <ReBarChart
+                      layout="vertical"
+                      data={incBySource}
+                      margin={{ top: 2, right: 60, bottom: 2, left: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+                      <XAxis
+                        type="number"
+                        tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={v => `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`}
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        width={90}
+                        tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 600 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(52,211,153,0.06)' }}
+                        content={({ active, payload }) => {
                           if (!active || !payload?.length) return null
                           return (
                             <div className="custom-tooltip">
-                              <p className="text-xs font-semibold text-white">{payload[0].name}</p>
-                              <p className="font-mono text-sm font-bold" style={{ color: '#fb7185' }}>{fmt(Number(payload[0].value))}</p>
+                              <p className="text-xs font-semibold text-white mb-1">{payload[0].payload.name}</p>
+                              <p className="font-mono text-sm font-bold" style={{ color: '#34d399' }}>
+                                +{fmt(Number(payload[0].value))}
+                              </p>
                             </div>
                           )
-                        }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="space-y-2">
-                      {expByCategory.slice(0, 4).map(c => (
-                        <div key={c.name} className="flex items-center gap-2 text-xs">
-                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: getCategoryColor(c.name) }} />
-                          <span className="text-white/65 flex-1 truncate font-medium">{c.name}</span>
-                          <span className="font-mono font-bold" style={{ color: '#fb7185' }}>{fmt(c.value)}</span>
+                        }}
+                      />
+                      <Bar dataKey="value" name="Income" radius={[0, 4, 4, 0]} maxBarSize={32}>
+                        {incBySource.map((_, i) => (
+                          <Cell
+                            key={i}
+                            fill={`rgba(52,211,153,${0.9 - i * 0.15})`}
+                          />
+                        ))}
+                      </Bar>
+                    </ReBarChart>
+                  </ResponsiveContainer>
+                  {/* Source totals legend */}
+                  <div className="space-y-2 mt-4 pt-4 border-t border-white/8">
+                    {incBySource.map((s, i) => (
+                      <div key={s.name} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                            style={{ background: `rgba(52,211,153,${0.9 - i * 0.15})` }} />
+                          <span className="text-white/70 font-medium truncate max-w-[140px]">{s.name}</span>
                         </div>
-                      ))}
+                        <span className="font-mono font-bold" style={{ color: '#34d399' }}>+{fmt(s.value)}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-white/8 mt-1">
+                      <span className="text-white/45 font-semibold uppercase tracking-wider">Total</span>
+                      <span className="font-mono font-bold text-sm" style={{ color: '#34d399' }}>+{fmt(totalIncome)}</span>
                     </div>
-                  </>
-                ) : (
-                  <div className="h-32 flex items-center justify-center">
-                    <p className="text-sm text-white/35">No expenses this month</p>
                   </div>
-                )}
-              </div>
-              <div>
-                <p className="text-sm font-bold text-white/70 mb-3 text-center">Income by Source</p>
-                {incByCategory.length > 0 ? (
-                  <>
-                    <ResponsiveContainer width="100%" height={160}>
-                      <PieChart>
-                        <Pie data={incByCategory} cx="50%" cy="50%"
-                          innerRadius={45} outerRadius={70} paddingAngle={2} dataKey="value">
-                          {incByCategory.map(e => <Cell key={e.name} fill={INCOME_CATEGORY_COLORS[e.name] ?? '#94a3b8'} opacity={0.9} />)}
-                        </Pie>
-                        <Tooltip content={({ active, payload }) => {
-                          if (!active || !payload?.length) return null
-                          return (
-                            <div className="custom-tooltip">
-                              <p className="text-xs font-semibold text-white">{payload[0].name}</p>
-                              <p className="font-mono text-sm font-bold" style={{ color: '#34d399' }}>{fmt(Number(payload[0].value))}</p>
-                            </div>
-                          )
-                        }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="space-y-2">
-                      {incByCategory.slice(0, 4).map(c => (
-                        <div key={c.name} className="flex items-center gap-2 text-xs">
-                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: INCOME_CATEGORY_COLORS[c.name] ?? '#94a3b8' }} />
-                          <span className="text-white/65 flex-1 truncate font-medium">{c.name}</span>
-                          <span className="font-mono font-bold" style={{ color: '#34d399' }}>{fmt(c.value)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="h-32 flex items-center justify-center">
-                    <p className="text-sm text-white/35">No income this month</p>
-                  </div>
-                )}
-              </div>
+                </>
+              ) : (
+                <div className="h-32 flex flex-col items-center justify-center gap-3">
+                  <p className="text-sm text-white/35">No income recorded this month</p>
+                  <button onClick={() => setShowAddIncome(true)}
+                    className="text-xs font-semibold py-1.5 px-3 rounded-xl text-white"
+                    style={{ background: '#10b981' }}>
+                    + Add Income
+                  </button>
+                </div>
+              )}
             </div>
           )}
+
+          {/* ── Expenses by Category — vertical bars ── */}
+          {showExpenses && (
+            <div className="card p-5" style={{ borderColor: 'rgba(251,113,133,0.15)', background: 'linear-gradient(135deg, rgba(251,113,133,0.04) 0%, transparent 60%)' }}>
+              <h2 className="text-sm font-bold text-white mb-0.5">Expenses by Category</h2>
+              <p className="text-xs font-medium text-white/40 mb-4">
+                {MONTH_FULL[parseInt(selectedMonthNum) - 1]} {selectedYear} · spending breakdown
+              </p>
+              {expByCategory.length > 0 ? (
+                <>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <ReBarChart
+                      data={expByCategory}
+                      margin={{ top: 4, right: 4, bottom: 32, left: -10 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10 }}
+                        axisLine={false}
+                        tickLine={false}
+                        angle={-35}
+                        textAnchor="end"
+                        interval={0}
+                      />
+                      <YAxis
+                        tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={v => `$${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
+                      />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(251,113,133,0.06)' }}
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.length) return null
+                          return (
+                            <div className="custom-tooltip">
+                              <p className="text-xs font-semibold text-white mb-1">{payload[0].payload.name}</p>
+                              <p className="font-mono text-sm font-bold" style={{ color: '#fb7185' }}>
+                                {fmt(Number(payload[0].value))}
+                              </p>
+                            </div>
+                          )
+                        }}
+                      />
+                      <Bar dataKey="value" name="Spent" radius={[4, 4, 0, 0]} maxBarSize={36}>
+                        {expByCategory.map(e => (
+                          <Cell key={e.name} fill={getCategoryColor(e.name)} opacity={0.85} />
+                        ))}
+                      </Bar>
+                    </ReBarChart>
+                  </ResponsiveContainer>
+                  {/* Top categories legend */}
+                  <div className="space-y-2 mt-2 pt-4 border-t border-white/8">
+                    {expByCategory.slice(0, 4).map(c => (
+                      <div key={c.name} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                            style={{ background: getCategoryColor(c.name) }} />
+                          <span className="text-white/70 font-medium truncate max-w-[140px]">{c.name}</span>
+                        </div>
+                        <span className="font-mono font-bold" style={{ color: '#fb7185' }}>{fmt(c.value)}</span>
+                      </div>
+                    ))}
+                    {expByCategory.length > 4 && (
+                      <p className="text-xs text-white/30 text-right">+{expByCategory.length - 4} more categories</p>
+                    )}
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-white/8 mt-1">
+                      <span className="text-white/45 font-semibold uppercase tracking-wider">Total</span>
+                      <span className="font-mono font-bold text-sm" style={{ color: '#fb7185' }}>{fmt(totalExpenses)}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="h-32 flex flex-col items-center justify-center gap-3">
+                  <p className="text-sm text-white/35">No expenses this month</p>
+                  <button onClick={() => setShowAddExpense(true)}
+                    className="text-xs font-semibold py-1.5 px-3 rounded-xl text-white"
+                    style={{ background: 'linear-gradient(135deg, #fb7185, #e11d48)' }}>
+                    + Add Expense
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       )}
 
