@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart as ReBarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, LabelList,
 } from 'recharts'
 import type { Expense, Income, Investment, Budget } from '@/types'
 import { INVESTMENT_CATEGORY_COLORS, INCOME_CATEGORY_COLORS } from '@/types'
@@ -596,10 +596,10 @@ export default function DashboardClient({
               </p>
               {expByCategory.length > 0 ? (
                 <>
-                  <ResponsiveContainer width="100%" height={180}>
+                  <ResponsiveContainer width="100%" height={200}>
                     <ReBarChart
                       data={expByCategory}
-                      margin={{ top: 4, right: 4, bottom: 32, left: -10 }}
+                      margin={{ top: 24, right: 4, bottom: 32, left: -10 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                       <XAxis
@@ -635,6 +635,27 @@ export default function DashboardClient({
                         {expByCategory.map(e => (
                           <Cell key={e.name} fill={getCategoryColor(e.name)} opacity={0.85} />
                         ))}
+                        <LabelList
+                          dataKey="value"
+                          position="top"
+                          content={({ x, y, width, value }) => {
+                            if (value == null || totalExpenses === 0) return null
+                            const pct = ((Number(value) / totalExpenses) * 100).toFixed(1)
+                            return (
+                              <text
+                                x={Number(x) + Number(width) / 2}
+                                y={Number(y) - 4}
+                                textAnchor="middle"
+                                fontSize={10}
+                                fontWeight={700}
+                                fill="rgba(255,255,255,0.65)"
+                                fontFamily="'SF Mono','Fira Code',monospace"
+                              >
+                                {pct}%
+                              </text>
+                            )
+                          }}
+                        />
                       </Bar>
                     </ReBarChart>
                   </ResponsiveContainer>
