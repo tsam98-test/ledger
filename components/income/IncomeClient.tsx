@@ -7,7 +7,7 @@ import type { Income } from '@/types'
 import { INCOME_CATEGORIES, INCOME_CATEGORY_COLORS } from '@/types'
 import { formatCurrency, exportToCSV, cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import AddIncomeModal from './AddIncomeModal'
+import AddIncomeModal, { type KnownSource } from './AddIncomeModal'
 import EditIncomeModal from './EditIncomeModal'
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
 
@@ -51,6 +51,16 @@ export default function IncomeClient({ initialIncome, userId }: { initialIncome:
   const uniqueSources  = useMemo(() => new Set(filtered.map((i) => i.source)).size, [filtered])
   const byCategory     = useMemo(() => { const map: Record<string,number>={};filtered.forEach((i)=>{map[i.category]=(map[i.category]??0)+Number(i.amount)});return Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([name,value])=>({name,value})) }, [filtered])
   const hasFilters     = Object.values(filters).some(Boolean)
+
+  // Deduplicated known sources for quick-select chips — most recent category per source
+  const knownSources = useMemo<KnownSource[]>(() => {
+    const map = new Map<string, string>()
+    // income is sorted date desc, so first occurrence = most recent category
+    ;[...income].forEach(i => {
+      if (!map.has(i.source)) map.set(i.source, i.category)
+    })
+    return Array.from(map.entries()).map(([source, category]) => ({ source, category }))
+  }, [income])
 
   function toggleSort(field: SF) { if (sortField===field) setSortOrder((o)=>(o==='asc'?'desc':'asc')); else { setSortField(field); setSortOrder('desc') } }
   function SortIcon({ field }: { field: SF }) {
@@ -187,7 +197,7 @@ export default function IncomeClient({ initialIncome, userId }: { initialIncome:
 
       <div className="sm:hidden"><button onClick={handleExport} className="btn-secondary w-full"><Download size={14}/> Export CSV</button></div>
 
-      {showAdd&&<AddIncomeModal userId={userId} onClose={()=>setShowAdd(false)} onSaved={handleAdded}/>}
+      {showAdd&&<AddIncomeModal userId={userId} onClose={()=>setShowAdd(false)} onSaved={handleAdded} knownSources={knownSources}/>}
       {editing&&<EditIncomeModal income={editing} userId={userId} onClose={()=>setEditing(null)} onSaved={handleUpdated}/>}
     </div>
   )
