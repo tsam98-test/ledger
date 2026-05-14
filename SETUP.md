@@ -1,4 +1,4 @@
-# Ledger — Personal Expense Tracker
+# Zenvest — Personal Expense Tracker
 ## Complete Setup & Deployment Guide
 
 ---
