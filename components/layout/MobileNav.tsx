@@ -39,8 +39,8 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
         style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
       >
         <div className="flex items-center gap-2.5">
-          <Image src="/Icon.png" alt="Spendora" width={28} height={28} className="rounded-lg" />
-          <span className="font-display text-lg text-[var(--text-primary)]">Spendora</span>
+          <Image src="/Icon.png" alt="Zenvest" width={28} height={28} className="rounded-lg" />
+          <span className="font-display text-lg text-[var(--text-primary)]">Zenvest</span>
         </div>
         <button onClick={() => setMenuOpen(!menuOpen)} className="btn-ghost p-2" aria-label="Menu">
           <div className="space-y-1.5">
