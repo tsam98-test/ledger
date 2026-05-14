@@ -36,9 +36,9 @@ export default function Sidebar({ userEmail }: { userEmail: string }) {
     >
       <div className="px-6 py-7 border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-3">
-          <Image src="/Icon.png" alt="Spendora" width={36} height={36} className="rounded-xl flex-shrink-0" />
+          <Image src="/Icon.png" alt="Zenvest" width={36} height={36} className="rounded-xl flex-shrink-0" />
           <div>
-            <p className="font-display text-xl text-[var(--text-primary)] leading-none">Spendora</p>
+            <p className="font-display text-xl text-[var(--text-primary)] leading-none">Zenvest</p>
             <p className="text-[10px] text-[var(--text-muted)] mt-0.5 uppercase tracking-widest">Track. Budget. Grow.</p>
           </div>
         </div>
