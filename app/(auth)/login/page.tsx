@@ -49,7 +49,7 @@ export default function LoginPage() {
           password,
           options: {
             emailRedirectTo:
-              'https://spendora-alpha-azure.vercel.app/reset-password',
+              'https://zenvest-alpha-azure.vercel.app/reset-password',
           },
         })
 
@@ -98,7 +98,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.resetPasswordForEmail(
         email.trim().toLowerCase(),
         {
-          redirectTo: 'https://spendora-alpha-azure.vercel.app/reset-password',
+          redirectTo: 'https://zenvest-alpha-azure.vercel.app/reset-password',
         }
       )
 
@@ -160,7 +160,7 @@ export default function LoginPage() {
           <div className="inline-flex mb-4">
             <Image
               src="/Icon.png"
-              alt="Spendora"
+              alt="Zenvest"
               width={72}
               height={72}
               className="rounded-2xl"
@@ -168,7 +168,7 @@ export default function LoginPage() {
           </div>
 
           <h1 className="font-display text-3xl text-[var(--text-primary)] tracking-tight">
-            Spendora
+            Zenvest
           </h1>
 
           <p className="text-sm mt-1.5" style={{ color: 'rgba(0,212,170,0.7)' }}>
