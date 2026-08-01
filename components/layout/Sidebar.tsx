@@ -5,10 +5,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard, Receipt, Target, LogOut,
-  ChevronRight, Wallet, BarChart2,
-} from 'lucide-react'
-import {
-  LayoutDashboard, Receipt, Target, LogOut,
   ChevronRight, Wallet, BarChart2, PieChart,
 } from 'lucide-react'
 import Image from 'next/image'
