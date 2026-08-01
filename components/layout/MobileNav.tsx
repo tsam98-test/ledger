@@ -7,16 +7,21 @@ import {
   LayoutDashboard, Receipt, Target, LogOut,
   Wallet, BarChart2,
 } from 'lucide-react'
+import {
+  LayoutDashboard, Receipt, Target, LogOut,
+  Wallet, BarChart2, PieChart,
+} from 'lucide-react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 
 const NAV_ITEMS = [
-  { href: '/dashboard-home', label: 'Dashboard',   icon: LayoutDashboard },
-  { href: '/expenses',       label: 'Expenses',    icon: Receipt         },
-  { href: '/income',         label: 'Income',      icon: Wallet          },
-  { href: '/investments',    label: 'Investments', icon: BarChart2       },
-  { href: '/budgets',        label: 'Budgets',     icon: Target          },
+  { href: '/dashboard-home',     label: 'Dashboard',         icon: LayoutDashboard },
+  { href: '/expenses',           label: 'Expenses',          icon: Receipt         },
+  { href: '/income',             label: 'Income',            icon: Wallet          },
+  { href: '/investments',        label: 'Investments',       icon: BarChart2       },
+  { href: '/budgets',            label: 'Budgets',           icon: Target          },
+  { href: '/money-management',   label: 'Money Management',  icon: PieChart        },
 ]
 
 export default function MobileNav({ userEmail }: { userEmail: string }) {
