@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef } from 'react'
 import {
-  TrendingUp, ShieldCheck, Home, Gift, Lock, RefreshCw,
+  TrendingUp, ShieldCheck, Home, Gift, RefreshCw,
   Pencil, Check, X, ChevronDown, PartyPopper, BarChart2,
 } from 'lucide-react'
 import {
@@ -123,10 +123,8 @@ export default function MoneyManagementClient({
   const cycleMonthsElapsed = monthsSince(cycle.cycle_start_month, currentMonth)
   const cycleMonthNumber = Math.min(cycleMonthsElapsed + 1, EMERGENCY_CYCLE_LENGTH_MONTHS)
   const cycleComplete = cycleMonthsElapsed >= EMERGENCY_CYCLE_LENGTH_MONTHS
-  const cycleMonthsLeft = Math.max(0, EMERGENCY_CYCLE_LENGTH_MONTHS - cycleMonthNumber)
   const fundPct = cycle.locked_goal > 0 ? Math.min(100, Math.round((emergencyFundBalance / cycle.locked_goal) * 100)) : 0
   const fundComplete = fundPct >= 100
-  const amountLeftToGoal = Math.max(0, cycle.locked_goal - emergencyFundBalance)
 
   // ── Upsert helpers ────────────────────────────────────────
   async function upsertMonthlyEntry(patch: Record<string, number | null>) {
@@ -326,64 +324,28 @@ export default function MoneyManagementClient({
         {/* Emergency fund */}
         <div className="card p-4" style={{ borderColor: 'rgba(0,212,170,0.2)' }}>
           <BucketHeader bucketKey="emergency" pct={MONEY_BUCKET_PCTS.emergency} />
-          <div className="flex justify-between mb-1"><span className="text-xs text-[var(--text-muted)]">Target</span><span className="font-mono text-xs text-[var(--text-muted)]">{formatCurrency(buckets.emergency.target)}</span></div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-xs text-[var(--text-muted)]">This month <span className="text-[var(--text-secondary)]">· manual</span></span>
+          <div className="flex justify-between mb-2"><span className="text-xs text-[var(--text-muted)]">Benchmark</span><span className="font-mono text-xs font-semibold" style={{ color: BUCKET_META.emergency.color }}>{formatCurrency(buckets.emergency.target)}</span></div>
+          <ProgressBar pct={bucketStatus('emergency').pct} color={bucketStatus('emergency').barColor} />
+          <div className="flex justify-between items-center mt-1.5 mb-2">
+            <p className={cn('text-xs', bucketStatus('emergency').labelColor)}>{bucketStatus('emergency').label}</p>
             {editing === 'emergency' ? (
               <EditRow value={editValue} onChange={(v) => { setEditValue(v); setEditError('') }} onCommit={commitEmergencyActual} onCancel={cancelEdit} saving={saving} />
             ) : (
-              <span className="flex items-center gap-1">
-                <span className="font-mono text-sm font-medium text-[var(--text-primary)]">{formatCurrency(emergencyActual)}</span>
-                <button onClick={() => startEdit('emergency', emergencyActual)} className="btn-ghost p-1"><Pencil size={12} /></button>
-              </span>
+              <button onClick={() => startEdit('emergency', emergencyActual)} className="btn-ghost p-1" aria-label="Log this month's contribution"><Pencil size={12} /></button>
             )}
           </div>
           {editError && editing === 'emergency' && <p className="text-rose-400 text-xs mb-1">{editError}</p>}
-          <ProgressBar pct={bucketStatus('emergency').pct} color={bucketStatus('emergency').barColor} />
-          <p className={cn('text-xs mt-1.5 mb-2', bucketStatus('emergency').labelColor)}>{bucketStatus('emergency').label}</p>
 
           <div className="border-t pt-2.5 mt-1" style={{ borderColor: 'var(--border)' }}>
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Lock size={11} className="text-[var(--text-muted)]" />
-              <span className="text-[10px] text-[var(--text-muted)]">
-                {cycleComplete ? 'Cycle complete' : `Month ${cycleMonthNumber} of ${EMERGENCY_CYCLE_LENGTH_MONTHS} · resets in ${cycleMonthsLeft} ${cycleMonthsLeft === 1 ? 'month' : 'months'}`}
-              </span>
-            </div>
-            <div className="h-1 rounded-full overflow-hidden mb-2" style={{ background: 'rgba(255,255,255,0.06)' }}>
-              <div className="h-full rounded-full" style={{ width: `${Math.round((cycleMonthNumber / EMERGENCY_CYCLE_LENGTH_MONTHS) * 100)}%`, background: '#00D4AA' }} />
-            </div>
-
-            <div className="flex justify-between items-center text-xs text-[var(--text-muted)] mb-0.5">
-              <span>Fixed goal (locked this cycle)</span>
-              {editing === 'goal' ? (
-                <EditRow value={editValue} onChange={(v) => { setEditValue(v); setEditError('') }} onCommit={commitGoalOverride} onCancel={cancelEdit} saving={saving} width="w-24" />
-              ) : (
-                <span className="flex items-center gap-1">
-                  <span className="font-mono text-[var(--text-primary)]">{formatCurrency(emergencyFundBalance)}</span> of <span className="font-mono">{formatCurrency(cycle.locked_goal)}</span>
-                  <button onClick={() => startEdit('goal', cycle.locked_goal)} className="btn-ghost p-1"><Pencil size={11} /></button>
-                </span>
-              )}
-            </div>
-            {editError && editing === 'goal' && <p className="text-rose-400 text-xs mb-1">{editError}</p>}
-            <p className="text-[10px] text-[var(--text-muted)] mb-1.5">
-              {cycle.goal_source === 'auto' ? `Based on 6-mo avg expenses (${formatCurrency(trailingAvgExpenses)}/mo)` : 'Manually set for this cycle'}
-            </p>
-            <ProgressBar pct={fundPct} color={BUCKET_META.emergency.color} />
-            <p className="text-xs text-[var(--text-muted)] mt-1 mb-2">{fundPct}% funded</p>
-
-            {/* Collected / left / months-left breakdown */}
-            <div className="grid grid-cols-3 gap-1 text-center rounded-lg py-2 mb-2" style={{ background: 'var(--bg-secondary)' }}>
+            {/* Collected + months-collected breakdown */}
+            <div className="grid grid-cols-2 gap-1 text-center rounded-lg py-2.5 mb-2" style={{ background: 'var(--bg-secondary)' }}>
               <div>
-                <p className="font-mono text-xs text-[var(--text-primary)]">{formatCurrency(emergencyFundBalance)}</p>
+                <p className="font-mono text-sm font-semibold" style={{ color: BUCKET_META.emergency.color }}>{formatCurrency(emergencyFundBalance)}</p>
                 <p className="text-[9px] text-[var(--text-muted)] mt-0.5">collected</p>
               </div>
               <div>
-                <p className="font-mono text-xs text-[var(--text-primary)]">{formatCurrency(amountLeftToGoal)}</p>
-                <p className="text-[9px] text-[var(--text-muted)] mt-0.5">left to goal</p>
-              </div>
-              <div>
-                <p className="font-mono text-xs text-[var(--text-primary)]">{cycleMonthsLeft}</p>
-                <p className="text-[9px] text-[var(--text-muted)] mt-0.5">{cycleMonthsLeft === 1 ? 'month left' : 'months left'}</p>
+                <p className="font-mono text-sm font-semibold text-[var(--text-primary)]">{cycleMonthNumber}</p>
+                <p className="text-[9px] text-[var(--text-muted)] mt-0.5">{cycleMonthNumber === 1 ? 'month collected' : 'months collected'}</p>
               </div>
             </div>
 
@@ -405,11 +367,8 @@ export default function MoneyManagementClient({
         {/* Rewards — auto-saves, no manual confirm step */}
         <div className="card p-4" style={{ borderColor: 'rgba(236,72,153,0.2)' }}>
           <BucketHeader bucketKey="rewards" pct={MONEY_BUCKET_PCTS.rewards} />
-          <div className="flex justify-between mb-1"><span className="text-xs text-[var(--text-muted)]">Target</span><span className="font-mono text-xs text-[var(--text-muted)]">{formatCurrency(buckets.rewards.target)}</span></div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-xs text-[var(--text-muted)]">
-              This month <span className="text-[var(--text-secondary)]">· {rewardsSaving ? 'saving…' : rewardsSaved ? 'saved ✓' : 'auto-saves'}</span>
-            </span>
+          <div className="flex justify-between mb-2"><span className="text-xs text-[var(--text-muted)]">Benchmark</span><span className="font-mono text-xs font-semibold" style={{ color: BUCKET_META.rewards.color }}>{formatCurrency(buckets.rewards.target)}</span></div>
+          <div className="flex justify-end items-center mb-2">
             <div className="relative">
               <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)]">$</span>
               <input
@@ -419,6 +378,7 @@ export default function MoneyManagementClient({
                 onBlur={commitRewards}
                 onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
                 className="input pl-5 w-24 text-sm py-1 font-mono text-right"
+                aria-label="This month's rewards spending"
               />
             </div>
           </div>
@@ -433,7 +393,7 @@ export default function MoneyManagementClient({
         <div className="grid md:grid-cols-[260px_1fr] gap-6">
           <div>
             <BucketHeader bucketKey="essentials" pct={MONEY_BUCKET_PCTS.essentials} />
-            <BucketBody bucketKey="essentials" target={buckets.essentials.target} actual={essentialsActual} status={bucketStatus('essentials')} readOnlyNote="auto" />
+            <BucketBody bucketKey="essentials" target={buckets.essentials.target} actual={essentialsActual} status={bucketStatus('essentials')} />
             {essentialsBreakdown.rows.length > 0 && (
               <div className="flex items-center gap-3 mt-3 text-[10px] text-[var(--text-muted)]">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ background: NEED_COLOR }} /> Needs {essentialsBreakdown.needsPct}%</span>
@@ -503,18 +463,16 @@ function BucketHeader({ bucketKey, pct }: { bucketKey: MoneyBucketKey; pct: numb
 }
 
 function BucketBody({
-  bucketKey, target, actual, status, readOnlyNote = 'auto',
+  bucketKey, target, status,
 }: {
   bucketKey: MoneyBucketKey; target: number; actual: number
   status: { pct: number; label: string; barColor: string; labelColor: string }
-  readOnlyNote?: string
 }) {
   return (
     <>
-      <div className="flex justify-between mb-1"><span className="text-xs text-[var(--text-muted)]">Target</span><span className="font-mono text-xs text-[var(--text-muted)]">{formatCurrency(target)}</span></div>
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-xs text-[var(--text-muted)]">This month <span style={{ color: BUCKET_META[bucketKey].color }}>· {readOnlyNote}</span></span>
-        <span className="font-mono text-sm font-medium text-[var(--text-primary)]">{formatCurrency(actual)}</span>
+      <div className="flex justify-between mb-2">
+        <span className="text-xs text-[var(--text-muted)]">Benchmark</span>
+        <span className="font-mono text-xs font-semibold" style={{ color: BUCKET_META[bucketKey].color }}>{formatCurrency(target)}</span>
       </div>
       <ProgressBar pct={status.pct} color={status.barColor} />
       <p className={cn('text-xs mt-1.5', status.labelColor)}>{status.label}</p>
