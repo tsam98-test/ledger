@@ -124,3 +124,59 @@ export const INVESTMENT_CATEGORY_COLORS: Record<string, string> = {
   'PPF/NPS':          '#34d399',
   Other:              '#94a3b8',
 }
+
+// ── Money Management (50/15/25/10 allocation) ──────────────
+export interface MoneyMonthlyEntry {
+  id: string
+  user_id: string
+  month: string                 // 'YYYY-MM'
+  income_override: number | null
+  emergency_actual: number
+  rewards_actual: number
+  created_at: string
+  updated_at: string
+}
+
+export type EmergencyGoalSource = 'auto' | 'manual'
+
+export interface EmergencyCycle {
+  id: string
+  user_id: string
+  cycle_start_month: string     // 'YYYY-MM'
+  locked_goal: number
+  goal_source: EmergencyGoalSource
+  created_at: string
+  updated_at: string
+}
+
+export type MoneyBucketKey = 'growth' | 'emergency' | 'essentials' | 'rewards'
+
+export const MONEY_BUCKET_PCTS: Record<MoneyBucketKey, number> = {
+  essentials: 0.50,
+  emergency: 0.15,
+  growth: 0.25,
+  rewards: 0.10,
+}
+
+// Buckets where exceeding the target is a good outcome (invested more,
+// saved more, treated yourself more). Essentials is the one bucket where
+// going over is bad — it means spending above the 50% needs/wants line.
+export const MONEY_BUCKET_GOOD_WHEN_OVER: Record<MoneyBucketKey, boolean> = {
+  growth: true,
+  emergency: true,
+  essentials: false,
+  rewards: true,
+}
+
+export const EMERGENCY_FUND_MONTHS_MULTIPLIER = 6
+export const EMERGENCY_CYCLE_LENGTH_MONTHS = 6
+
+// Needs vs wants split for the Essentials expense breakdown.
+// Anything not listed here (including custom/unknown categories) is a want.
+export const NEEDS_CATEGORIES = [
+  'Housing', 'Food & Dining', 'Transportation', 'Utilities', 'Healthcare',
+]
+
+export function isNeedCategory(category: string): boolean {
+  return NEEDS_CATEGORIES.includes(category)
+}
