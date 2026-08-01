@@ -57,6 +57,11 @@ export function getLastNMonths(n: number): string[] {
   return months
 }
 
+// Whole calendar months between two 'YYYY-MM' strings (0 = same month)
+export function monthsSince(startMonth: string, currentMonth: string): number {
+  return differenceInCalendarMonths(parseISO(`${currentMonth}-01`), parseISO(`${startMonth}-01`))
+}
+
 // Calculate percentage
 export function calcPercent(value: number, total: number): number {
   if (total === 0) return 0
