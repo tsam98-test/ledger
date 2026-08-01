@@ -168,8 +168,8 @@ export const MONEY_BUCKET_GOOD_WHEN_OVER: Record<MoneyBucketKey, boolean> = {
   rewards: true,
 }
 
-export const EMERGENCY_FUND_MONTHS_MULTIPLIER = 6
-export const EMERGENCY_CYCLE_LENGTH_MONTHS = 6
+export const EMERGENCY_FUND_MONTHS_MULTIPLIER = 6   // goal size: 6 months of expenses
+export const EMERGENCY_CYCLE_LENGTH_MONTHS = 12      // how often the goal is recalculated/reset
 
 // Needs vs wants split for the Essentials expense breakdown.
 // Anything not listed here (including custom/unknown categories) is a want.
