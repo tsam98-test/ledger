@@ -16,7 +16,8 @@ export default async function MoneyManagementPage() {
   const sixMonthsAgo = format(subMonths(startOfMonth(new Date()), 5), 'yyyy-MM-dd')
 
   const [
-    { data: investments },
+    { data: investmentsThisMonth },
+    { data: investmentsAllTime },
     { data: expensesThisMonth },
     { data: expensesTrailing },
     { data: incomeThisMonth },
@@ -24,6 +25,7 @@ export default async function MoneyManagementPage() {
     { data: allEmergencyActuals },
     { data: existingCycle },
   ] = await Promise.all([
+    supabase.from('investments').select('category, amount_invested').eq('user_id', user.id).gte('date', from).lte('date', to),
     supabase.from('investments').select('category, current_value').eq('user_id', user.id),
     supabase.from('expenses').select('category, amount').eq('user_id', user.id).gte('date', from).lte('date', to),
     supabase.from('expenses').select('amount').eq('user_id', user.id).gte('date', sixMonthsAgo),
@@ -63,7 +65,8 @@ export default async function MoneyManagementPage() {
     <MoneyManagementClient
       userId={user.id}
       currentMonth={currentMonth}
-      investments={investments ?? []}
+      investmentsThisMonth={investmentsThisMonth ?? []}
+      investmentsAllTime={investmentsAllTime ?? []}
       expensesThisMonth={expensesThisMonth ?? []}
       incomeThisMonth={incomeThisMonth ?? []}
       monthlyEntry={monthlyEntry}
