@@ -99,6 +99,14 @@ export function validateAmount(amount: string): boolean {
   return !isNaN(num) && num > 0 && num <= 999999.99
 }
 
+// Parse a non-negative amount, allowing zero (unlike validateAmount above).
+// Returns null if the input isn't a valid, non-negative number.
+export function parseNonNegativeAmount(input: string): number | null {
+  const num = parseFloat(input)
+  if (isNaN(num) || num < 0 || num > 9999999.99) return null
+  return num
+}
+
 // Category colors map
 export const CATEGORY_COLORS: Record<string, string> = {
   'Food & Dining': '#f59e0b',
