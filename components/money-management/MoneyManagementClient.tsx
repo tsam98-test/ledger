@@ -12,7 +12,7 @@ import type { MoneyMonthlyEntry, EmergencyCycle, MoneyBucketKey } from '@/types'
 import {
   MONEY_BUCKET_PCTS, MONEY_BUCKET_GOOD_WHEN_OVER,
   EMERGENCY_FUND_MONTHS_MULTIPLIER, EMERGENCY_CYCLE_LENGTH_MONTHS,
-  isNeedCategory,
+  isNeedCategory, INCOME_CATEGORY_COLORS,
 } from '@/types'
 import { formatCurrency, monthsSince, cn, parseNonNegativeAmount } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -23,14 +23,14 @@ interface Props {
   investmentsThisMonth: { category: string; amount_invested: number }[]
   investmentsAllTime: { category: string; current_value: number }[]
   expensesThisMonth: { category: string; amount: number }[]
-  incomeThisMonth: { amount: number }[]
+  incomeThisMonth: { amount: number; category: string }[]
   monthlyEntry: MoneyMonthlyEntry | null
   cycle: EmergencyCycle
   emergencyFundBalance: number
   trailingAvgExpenses: number
 }
 
-type EditKey = 'income' | 'emergency' | 'goal' | null
+type EditKey = 'emergency' | 'goal' | null
 
 const NEED_COLOR = '#3C6EE8'
 const WANT_COLOR = '#f59e0b'
@@ -48,13 +48,23 @@ export default function MoneyManagementClient({
 }: Props) {
   const supabase = createClient()
 
-  const autoIncome = useMemo(
+  // Monthly income is always derived live from this month's Income entries —
+  // whatever you log on the Income page is reflected here automatically,
+  // with no separate number to type in and no way for it to go stale.
+  const income = useMemo(
     () => incomeThisMonth.reduce((s, i) => s + Number(i.amount), 0),
     [incomeThisMonth]
   )
 
-  const [income, setIncome] = useState(monthlyEntry?.income_override ?? autoIncome)
-  const [incomeIsOverride, setIncomeIsOverride] = useState(monthlyEntry?.income_override != null)
+  const incomeBreakdown = useMemo(() => {
+    const map: Record<string, number> = {}
+    incomeThisMonth.forEach((i) => { map[i.category] = (map[i.category] ?? 0) + Number(i.amount) })
+    return Object.entries(map)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, value]) => ({ name, value, pct: income > 0 ? Math.round((value / income) * 100) : 0 }))
+  }, [incomeThisMonth, income])
+
+  const [openIncomeBreakdown, setOpenIncomeBreakdown] = useState(false)
   const [emergencyActual, setEmergencyActual] = useState(monthlyEntry?.emergency_actual ?? 0)
   const [emergencyFundBalance, setEmergencyFundBalance] = useState(initialBalance)
   const [cycle, setCycle] = useState(initialCycle)
@@ -63,7 +73,7 @@ export default function MoneyManagementClient({
   const [editValue, setEditValue] = useState('')
   const [editError, setEditError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [openBreakdown, setOpenBreakdown] = useState(false) // growth only now
+  const [openGrowthBreakdown, setOpenGrowthBreakdown] = useState(false)
 
   // Rewards — always-editable, auto-saves on blur (no manual save step)
   const [rewardsInput, setRewardsInput] = useState(String(monthlyEntry?.rewards_actual ?? 0))
@@ -144,24 +154,6 @@ export default function MoneyManagementClient({
     setEditing(null)
     setEditValue('')
     setEditError('')
-  }
-
-  async function commitIncome() {
-    const value = parseNonNegativeAmount(editValue)
-    if (value === null) { setEditError('Enter a valid amount (0 or more)'); return }
-    setSaving(true)
-    const { error } = await upsertMonthlyEntry({ income_override: value })
-    setSaving(false)
-    if (error) { setEditError('Failed to save. Try again.'); return }
-    setIncome(value)
-    setIncomeIsOverride(true)
-    cancelEdit()
-  }
-
-  function resetIncomeToAuto() {
-    setIncome(autoIncome)
-    setIncomeIsOverride(false)
-    upsertMonthlyEntry({ income_override: null })
   }
 
   async function commitEmergencyActual() {
@@ -252,34 +244,41 @@ export default function MoneyManagementClient({
           <h1 className="font-display text-2xl md:text-3xl text-[var(--text-primary)]">Money management</h1>
           <p className="text-[var(--text-muted)] text-sm mt-1">Allocate this month&apos;s income across your four buckets</p>
         </div>
-        <div className="text-right">
+        <div className="text-right max-w-[260px]">
           <label className="label mb-1">Monthly income</label>
-          {editing === 'income' ? (
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)]">$</span>
-                <input
-                  type="number" min="0" step="0.01" autoFocus
-                  value={editValue}
-                  onChange={(e) => { setEditValue(e.target.value); setEditError('') }}
-                  onKeyDown={(e) => { if (e.key === 'Enter') commitIncome(); if (e.key === 'Escape') cancelEdit() }}
-                  className="input pl-6 w-32 text-sm py-1.5 font-mono"
-                />
-              </div>
-              <button onClick={commitIncome} disabled={saving} className="btn-primary py-1.5 px-2.5"><Check size={14} /></button>
-              <button onClick={cancelEdit} className="btn-secondary py-1.5 px-2.5"><X size={14} /></button>
-            </div>
+          <span className="font-mono text-base text-[var(--text-primary)]">{formatCurrency(income)}</span>
+          <p className="text-[10px] text-[var(--text-muted)] mt-1">
+            auto · synced with your Income entries this month
+          </p>
+
+          {incomeBreakdown.length > 0 ? (
+            <>
+              <button
+                onClick={() => setOpenIncomeBreakdown((v) => !v)}
+                className="flex items-center gap-1 text-[11px] font-medium mt-1.5 ml-auto text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                aria-expanded={openIncomeBreakdown}
+              >
+                Income breakdown <ChevronDown size={12} className={cn('transition-transform', openIncomeBreakdown && 'rotate-180')} />
+              </button>
+              {openIncomeBreakdown && (
+                <div className="mt-2 pt-2 border-t space-y-1.5 text-left" style={{ borderColor: 'var(--border)' }}>
+                  {incomeBreakdown.map((row) => (
+                    <div key={row.name} className="flex justify-between items-center gap-4 text-xs">
+                      <span className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: INCOME_CATEGORY_COLORS[row.name] ?? '#94a3b8' }} />
+                        {row.name}
+                      </span>
+                      <span className="flex gap-2">
+                        <span className="text-[var(--text-muted)]">{row.pct}%</span>
+                        <span className="font-mono text-[var(--text-secondary)]">{formatCurrency(row.value)}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
-            <div className="flex items-center gap-2 justify-end">
-              <span className="font-mono text-base text-[var(--text-primary)]">{formatCurrency(income)}</span>
-              <button onClick={() => startEdit('income', income)} className="btn-ghost p-1.5"><Pencil size={13} /></button>
-            </div>
-          )}
-          {editError && editing === 'income' && <p className="text-rose-400 text-xs mt-1">{editError}</p>}
-          {incomeIsOverride && editing !== 'income' && (
-            <button onClick={resetIncomeToAuto} className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] mt-1">
-              manual · reset to this month&apos;s income ({formatCurrency(autoIncome)})
-            </button>
+            <p className="text-[10px] text-[var(--text-muted)] mt-1.5">No income logged yet this month</p>
           )}
         </div>
       </div>
@@ -301,10 +300,10 @@ export default function MoneyManagementClient({
           <BucketBody bucketKey="growth" target={buckets.growth.target} actual={growthActual} status={bucketStatus('growth')} />
           {growthBreakdown.length > 0 && (
             <>
-              <button onClick={() => setOpenBreakdown((v) => !v)} className="flex items-center gap-1 text-xs font-medium mt-2" style={{ color: BUCKET_META.growth.color }} aria-expanded={openBreakdown}>
-                Portfolio diversification (all-time) <ChevronDown size={13} className={cn('transition-transform', openBreakdown && 'rotate-180')} />
+              <button onClick={() => setOpenGrowthBreakdown((v) => !v)} className="flex items-center gap-1 text-xs font-medium mt-2" style={{ color: BUCKET_META.growth.color }} aria-expanded={openGrowthBreakdown}>
+                Portfolio diversification (all-time) <ChevronDown size={13} className={cn('transition-transform', openGrowthBreakdown && 'rotate-180')} />
               </button>
-              {openBreakdown && (
+              {openGrowthBreakdown && (
                 <div className="mt-2 pt-2 border-t space-y-1.5" style={{ borderColor: 'var(--border)' }}>
                   {growthBreakdown.map((row) => (
                     <div key={row.name} className="flex justify-between items-center text-xs">
