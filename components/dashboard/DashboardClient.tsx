@@ -12,7 +12,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, LabelList,
 } from 'recharts'
 import type { Expense, Income, Investment, Budget } from '@/types'
-import { INVESTMENT_CATEGORY_COLORS, INCOME_CATEGORY_COLORS } from '@/types'
+import { INVESTMENT_CATEGORY_COLORS, INCOME_CATEGORY_COLORS, MONEY_BUCKET_PCTS } from '@/types'
 import {
   formatCurrency,
   getBudgetBarColor, getBudgetStatusColor, calcPercent, getCategoryColor, cn,
@@ -62,8 +62,8 @@ interface Props {
   budgets: Budget[]
   currentMonth: string
   userId: string
+  moneyManagement?: { emergencyActual: number; rewardsActual: number }
 }
-
 function getMonthKey(d: string) { return d.slice(0, 7) }
 
 function getCategoryEmoji(cat: string): string {
@@ -89,6 +89,7 @@ const VIEW_CONFIG: Record<ViewMode, { color: string; bg: string; border: string 
 
 export default function DashboardClient({
   expenses: initExp, income: initInc, investments, budgets, currentMonth, userId,
+  moneyManagement,
 }: Props) {
   const [expenses, setExpenses] = useState(initExp)
   const [income, setIncome]     = useState(initInc)
@@ -189,6 +190,24 @@ export default function DashboardClient({
   }, [monthExpenses])
 
   const savingsRate = totalIncome > 0 ? Math.max(0, Math.min(100, (netSavings / totalIncome) * 100)) : 0
+
+  // ── Money-management allocation snapshot ──
+  // Always reflects the real current calendar month (same as the Money
+  // Management page), regardless of which month is selected in the dashboard's
+  // own month browser above. This is what drives the "income divided into
+  // buckets" summary card.
+  const currentMonthIncomeTotal = useMemo(
+    () => income.filter(i => getMonthKey(i.date) === currentMonth).reduce((s, i) => s + Number(i.amount), 0),
+    [income, currentMonth]
+  )
+  const currentMonthExpensesTotal = useMemo(
+    () => expenses.filter(e => getMonthKey(e.date) === currentMonth).reduce((s, e) => s + Number(e.amount), 0),
+    [expenses, currentMonth]
+  )
+  const currentMonthGrowthActual = useMemo(
+    () => investments.filter(i => getMonthKey(i.date) === currentMonth).reduce((s, i) => s + Number(i.amount_invested), 0),
+    [investments, currentMonth]
+  )
 
   const invByCategory = useMemo(() => {
     const map: Record<string, number> = {}
@@ -731,6 +750,18 @@ export default function DashboardClient({
         </div>
       )}
 
+     {/* ── Money Management Allocation ── */}
+      {showIncome && (
+        <MoneyManagementSummaryCard
+          totalIncome={currentMonthIncomeTotal}
+          essentialsActual={currentMonthExpensesTotal}
+          growthActual={currentMonthGrowthActual}
+          emergencyActual={moneyManagement?.emergencyActual ?? 0}
+          rewardsActual={moneyManagement?.rewardsActual ?? 0}
+          fmt={fmt}
+        />
+      )}
+
       {/* ── Investment Returns ── */}
       {showInvestments && investments.length > 0 && (
         <div className="card p-5">
@@ -871,6 +902,79 @@ export default function DashboardClient({
         <AddIncomeModal userId={userId} onClose={() => setShowAddIncome(false)}
           onSaved={i => { setIncome(p => [i, ...p]); setShowAddIncome(false) }}
           knownSources={knownSources} />
+      )}
+    </div>
+  )
+}
+
+// ── MoneyManagementSummaryCard ──────────────────────────────
+// Shows this month's total income and how it's actually split across the
+// four 50/25/15/10 buckets, so the split is visible the moment the
+// dashboard opens instead of only on the Money Management page.
+const MM_BUCKETS: { key: 'essentials' | 'growth' | 'emergency' | 'rewards'; label: string; color: string }[] = [
+  { key: 'essentials', label: 'Essentials', color: '#3C6EE8' },
+  { key: 'growth',     label: 'Growth',     color: '#fbbf24' },
+  { key: 'emergency',  label: 'Emergency',  color: '#00D4AA' },
+  { key: 'rewards',    label: 'Rewards',    color: '#ec4899' },
+]
+
+function MoneyManagementSummaryCard({
+  totalIncome, essentialsActual, growthActual, emergencyActual, rewardsActual, fmt,
+}: {
+  totalIncome: number
+  essentialsActual: number
+  growthActual: number
+  emergencyActual: number
+  rewardsActual: number
+  fmt: (n: number) => string
+}) {
+  const actuals: Record<string, number> = {
+    essentials: essentialsActual, growth: growthActual, emergency: emergencyActual, rewards: rewardsActual,
+  }
+
+  return (
+    <div className="card p-5">
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-base font-bold text-white">Money Management</h2>
+        <Link href="/money-management" className="text-xs font-semibold hover:opacity-75 transition-opacity" style={{ color: '#a78bfa' }}>
+          Manage →
+        </Link>
+      </div>
+
+      {totalIncome === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-sm text-white/35 mb-3">Add this month&apos;s income to see it split across your buckets.</p>
+          <Link href="/income" className="text-xs font-semibold hover:opacity-75" style={{ color: '#34d399' }}>+ Add Income</Link>
+        </div>
+      ) : (
+        <>
+          <p className="text-xs text-white/40 mb-4">
+            This month&apos;s income of <span className="font-mono text-white/70">{fmt(totalIncome)}</span> split across your four buckets
+          </p>
+          <div className="space-y-3">
+            {MM_BUCKETS.map(b => {
+              const pct = MONEY_BUCKET_PCTS[b.key]
+              const target = totalIncome * pct
+              const actual = actuals[b.key]
+              const barPct = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0
+              return (
+                <div key={b.key}>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-white/60 font-medium">
+                      {b.label} <span className="text-white/30">· {Math.round(pct * 100)}%</span>
+                    </span>
+                    <span className="font-mono text-white/70">
+                      {fmt(actual)} <span className="text-white/30">/ {fmt(target)}</span>
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full overflow-hidden bg-white/8">
+                    <div className="h-full rounded-full" style={{ width: `${barPct}%`, background: b.color }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </>
       )}
     </div>
   )
