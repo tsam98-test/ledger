@@ -29,7 +29,7 @@ export default async function MoneyManagementPage() {
     supabase.from('investments').select('category, current_value').eq('user_id', user.id),
     supabase.from('expenses').select('category, amount').eq('user_id', user.id).gte('date', from).lte('date', to),
     supabase.from('expenses').select('amount').eq('user_id', user.id).gte('date', sixMonthsAgo),
-    supabase.from('income').select('amount').eq('user_id', user.id).gte('date', from).lte('date', to),
+    supabase.from('income').select('amount, category').eq('user_id', user.id).gte('date', from).lte('date', to),
     supabase.from('money_monthly_entries').select('*').eq('user_id', user.id).eq('month', currentMonth).maybeSingle(),
     supabase.from('money_monthly_entries').select('emergency_actual').eq('user_id', user.id),
     supabase.from('money_emergency_cycle').select('*').eq('user_id', user.id).maybeSingle(),
