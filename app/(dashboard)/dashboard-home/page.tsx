@@ -16,6 +16,12 @@ export default async function DashboardHomePage() {
   const { data: income }      = await supabase.from('income').select('*').eq('user_id', user.id).gte('date', sixMonthsAgo).order('date', { ascending: false })
   const { data: investments } = await supabase.from('investments').select('*').eq('user_id', user.id).order('date', { ascending: false })
   const { data: budgets }     = await supabase.from('budgets').select('*').eq('user_id', user.id)
+  const { data: moneyEntry }  = await supabase
+    .from('money_monthly_entries')
+    .select('emergency_actual, rewards_actual')
+    .eq('user_id', user.id)
+    .eq('month', currentMonth)
+    .maybeSingle()
 
   return (
     <DashboardClient
@@ -25,6 +31,10 @@ export default async function DashboardHomePage() {
       budgets={budgets ?? []}
       currentMonth={currentMonth}
       userId={user.id}
+      moneyManagement={{
+        emergencyActual: Number(moneyEntry?.emergency_actual ?? 0),
+        rewardsActual: Number(moneyEntry?.rewards_actual ?? 0),
+      }}
     />
   )
 }
