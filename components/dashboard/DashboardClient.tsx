@@ -62,7 +62,7 @@ interface Props {
   budgets: Budget[]
   currentMonth: string
   userId: string
-  moneyManagement?: { emergencyActual: number; rewardsActual: number }
+  moneyManagement?: { emergencyActual: number }
 }
 function getMonthKey(d: string) { return d.slice(0, 7) }
 
@@ -757,7 +757,6 @@ export default function DashboardClient({
           essentialsActual={currentMonthExpensesTotal}
           growthActual={currentMonthGrowthActual}
           emergencyActual={moneyManagement?.emergencyActual ?? 0}
-          rewardsActual={moneyManagement?.rewardsActual ?? 0}
           fmt={fmt}
         />
       )}
@@ -919,17 +918,16 @@ const MM_BUCKETS: { key: 'essentials' | 'growth' | 'emergency' | 'rewards'; labe
 ]
 
 function MoneyManagementSummaryCard({
-  totalIncome, essentialsActual, growthActual, emergencyActual, rewardsActual, fmt,
+  totalIncome, essentialsActual, growthActual, emergencyActual, fmt,
 }: {
   totalIncome: number
   essentialsActual: number
   growthActual: number
   emergencyActual: number
-  rewardsActual: number
   fmt: (n: number) => string
 }) {
   const actuals: Record<string, number> = {
-    essentials: essentialsActual, growth: growthActual, emergency: emergencyActual, rewards: rewardsActual,
+    essentials: essentialsActual, growth: growthActual, emergency: emergencyActual,
   }
 
   return (
@@ -955,6 +953,25 @@ function MoneyManagementSummaryCard({
             {MM_BUCKETS.map(b => {
               const pct = MONEY_BUCKET_PCTS[b.key]
               const target = totalIncome * pct
+
+              // Rewards is a computed allowance, not logged spend — show the
+              // amount on its own rather than comparing it to an "actual".
+              if (b.key === 'rewards') {
+                return (
+                  <div key={b.key}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-white/60 font-medium">
+                        {b.label} <span className="text-white/30">· {Math.round(pct * 100)}% auto</span>
+                      </span>
+                      <span className="font-mono text-white/70">{fmt(target)}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden bg-white/8">
+                      <div className="h-full rounded-full opacity-50" style={{ width: '100%', background: b.color }} />
+                    </div>
+                  </div>
+                )
+              }
+
               const actual = actuals[b.key]
               const barPct = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0
               return (
