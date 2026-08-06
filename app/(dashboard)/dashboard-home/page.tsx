@@ -18,7 +18,7 @@ export default async function DashboardHomePage() {
   const { data: budgets }     = await supabase.from('budgets').select('*').eq('user_id', user.id)
   const { data: moneyEntry }  = await supabase
     .from('money_monthly_entries')
-    .select('emergency_actual, rewards_actual')
+    .select('emergency_actual')
     .eq('user_id', user.id)
     .eq('month', currentMonth)
     .maybeSingle()
@@ -33,7 +33,6 @@ export default async function DashboardHomePage() {
       userId={user.id}
       moneyManagement={{
         emergencyActual: Number(moneyEntry?.emergency_actual ?? 0),
-        rewardsActual: Number(moneyEntry?.rewards_actual ?? 0),
       }}
     />
   )
