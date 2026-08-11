@@ -172,12 +172,12 @@ export function Modal({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
       style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
-        className="card w-full max-w-md p-6 shadow-glow-lg animate-scale-in"
+        className="card w-full max-w-md p-6 shadow-glow-lg animate-scale-in max-h-[85vh] overflow-y-auto my-8"
         style={{ borderColor: 'rgba(0,212,170,0.12)' }}
         onClick={(e) => e.stopPropagation()}
       >
